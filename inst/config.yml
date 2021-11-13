@@ -1,0 +1,21 @@
+default:
+    example.gene.de.path: "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
+    example.met.de.path:  "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
+
+    path.to.kegg.network:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds"
+    path.to.rhea.network:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.rhea.rds"
+    path.to.met.kegg.db:          "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.kegg.db.rds"
+    path.to.met.rhea.db:          "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.rhea.db.rds"
+    path.to.org.Mm.eg.gatom.anno: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds"
+    path.to.org.Hs.eg.gatom.anno: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Hs.eg.gatom.anno.rds"
+
+local:
+    example.gene.de.path:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.gene.de.tsv")
+    example.med.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.met.de.tsv")
+    path.to.kegg.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.kegg.rds")
+    path.to.rhea.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.rhea.rds")
+    path.to.met.kegg.db:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.kegg.db.rds")
+    path.to.met.rhea.db:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.rhea.db.rds")
+    path.to.org.Mm.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Mm.eg.gatom.anno.rds")
+    path.to.org.Hs.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Hs.eg.gatom.anno.rds")
+

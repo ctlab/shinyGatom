@@ -20,5 +20,6 @@ Imports:
     pryr,
     RCurl,
     shiny,
-    shinyCyJS
+    shinyCyJS,
+    config
 

@@ -12,7 +12,8 @@
 #' @import parallel
 #' @import pryr
 #' @import markdown
-ShinyGATOM <- function() {
+#' @export
+ShinyGATOM <- function(config_file=system.file('config.yml', package = 'ShinyGATOM')) {
     addResourcePath('/www',
                     system.file('www', package = 'ShinyGATOM'))
 
@@ -32,5 +33,5 @@ ShinyGATOM <- function() {
     #    "sce"="kegg.yeast.network"
     #    )
 
-    shinyApp(app_ui, app_server)
+    shinyApp(app_ui, app_server(config_file))
 }
