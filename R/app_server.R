@@ -530,11 +530,10 @@ app_server <- function(config_file) {
                     met.to.filter = NULL
                 }
 
-                nodesAs = isolate(input$nodesAs)
+                topology = isolate(input$nodesAs)
 
                 es <- makeMetabolicGraph(network=network,
-                                         #nodesAs="atoms",
-                                         nodesAs=nodesAs,
+                                         topology=topology,
                                          org.gatom.anno=org.Mm.eg.gatom.anno,
                                          gene.de=geneDEInput(),
                                          met.db=met.db,
