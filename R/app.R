@@ -15,299 +15,80 @@
 ShinyGATOM <- function() {
     addResourcePath('/www',
                     system.file('www', package = 'ShinyGATOM'))
-    ui <- fluidPage(
-        myActionButton <- function (inputId, label, icon = NULL, ...) {
-            tags$button(id = inputId, type = "button", class = "btn action-button", 
-                        list(icon, label), ...)
-        },
-        
-        mySidebarPanel <- function(...) {
-            div(class="sidebar col-sm-3", tags$form(class="well", ...))
-        },
-        
-        myMainPanel <- function(...) {
-            div(class="mainPanel col-sm-9", ...)
-        },
-        
-        workPanel <- tagList(
-            fixedRow(
-                column(12,
-                       div(
-                           class="alert alert-info",
-                           role="alert",
-                           HTML('Like Shiny GAM? Check out <a href="https://artyomovlab.wustl.edu/phantasus">Phantasus</a> where you can <a href="https://artyomovlab.wustl.edu/phantasus/phantasus-tutorial.html">do differential expression and submit the results to Shiny GAM</a>')
-                       )
-                )
-            ),
-            fixedRow(
-                mySidebarPanel(
-                    actionButton("resetInput", label="Reset all", 
-                                 onclick=paste(
-                                     'resetFileInput("geneDE"); resetFileInput("metDE")',
-                                     '$("#loadExampleGeneDE").attr("checked", false).trigger("change")',
-                                     '$("#loadExampleMetDE").attr("checked", false).trigger("change")',
-                                     '$("#preprocess").click(); $("#find").click()',
-                                     sep=";")
-                    ),
-                    checkboxInput(
-                        "loadExampleGeneDE",
-                        label="Example DE for genes",
-                        value=FALSE),
-                    checkboxInput(
-                        "loadExampleMetDE",
-                        label="Example DE for metabolites",
-                        value=FALSE),
-                    conditionalPanel("input.loadExampleGeneDE || input.loadExampleMetDE",
-                                     p("Organism: Mouse")
-                    ),
-                    selectInput(
-                        "network_type",
-                        label="Select type of network",
-                        choices=c("KEGG network"="kegg",
-                                  "Rhea network"="rhea"),
-                        selected="kegg"
-                    ),
-                    conditionalPanel("!input.loadExampleGeneDE && !input.loadExampleMetDE",
-                                     selectInput(
-                                         "network",
-                                         label="Select an organism",
-                                         choices=c("Mouse"="mmu",
-                                                   "Human"="hsa",
-                                                   "Arabidopsis"="ath",
-                                                   "Yeast"="sce"),
-                                         selected="mmu"
-                                     ),
-                                     fileInput("geneDE", "File with DE for genes"),
-                                     fileInput("metDE", "File with DE for metabolites")
-                    ),
-                    #uiOutput("reactionsAsHolder"),
-                    selectInput("reactionsAs", 
-                                label="Interpret reactions as",
-                                c("edges"="edges", "nodes"="nodes"),
-                                selected="nodes"),
-                    selectInput("nodesAs", 
-                                label="Interpret nodes as",
-                                c("metabolites"="metabolites", "atoms"="atoms"),
-                                selected="atoms"),
-                    conditionalPanel("false",
-                                     checkboxInput(
-                                         "autoFindModule",
-                                         label="Set FDRs & run step 2 automatically",
-                                         value=TRUE),
-                                     actionButton("preprocess", label="Step 1: Make network")
-                    ),
-                    myActionButton("runAll",   label="Run step 1, autogenerate FDRs and run step 2", 
-                                   onclick='$("#autoFindModule")[0].checked=true; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
-                                   disabled=""),
-                    div("or", style="text-align: center"),
-                    myActionButton("runStep1", label="Step 1: Make network", 
-                                   onclick='$("#autoFindModule")[0].checked=false; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
-                                   disabled="")
-                ),
-                myMainPanel(
-                    div(class="DEBlock",
-                        h3("Differential expression for genes"),
-                        uiOutput("geneDESummary"),
-                        uiOutput("geneDETable"),
-                        uiOutput("geneDENotMapped"),
-                        uiOutput("geneDENotMappedTable")),
-                    div(class="DEBlock",
-                        h3("Differential expression for metabolites"),
-                        uiOutput("metDESummary"),
-                        uiOutput("metDETable"),
-                        uiOutput("metDENotMapped"),
-                        uiOutput("metDENotMappedTable")),
-                    div(class="bottom-buffer",
-                        h3("Network summary"),
-                        uiOutput("networkSummary"),
-                        conditionalPanel("network.available",
-                                         downloadButton("downloadNetwork", "Download XGMML"),
-                                         h4("BUM distribution for genes"),
-                                         plotOutput("genesBUMPlot"),
-                                         h4("BUM distribution for metabolites"),
-                                         plotOutput("metsBUMPlot")
-                        )
-                    ),
-                )
-            ),
-            div(id="module-panel", class="row top-buffer",
-                div(class="sidebar col-sm-3",
-                    wellPanel(
-                        conditionalPanel("network.hasGenes",
-                                         checkboxInput("nullkgene", 
-                                                       label="Don't use genes for scoring",
-                                                       value=FALSE),
-                                         numericInput("kgene",
-                                                      label=HTML("k.gene"),
-                                                      max=100, min=0, value=25, step=1)),
-                        
-                        conditionalPanel("network.hasMets",
-                                         checkboxInput("nullkmet", 
-                                                       label="Don't use metabolites for scoring",
-                                                       value=FALSE),
-                                         numericInput("kmet",
-                                                      label=HTML("k.met"),
-                                                      max=100, min=0, value=25, step=1)
-                        ),
-                        
-                        #myActionButton("resetFDRs", "Autogenerate FDRs", disabled=""),
-                        checkboxInput(
-                            "solveToOptimality", 
-                            label="Try to solve to optimality",
-                            value=FALSE),
-                        conditionalPanel("network.available",
-                                         uiOutput("solverString")
-                        ),
-                        myActionButton("find", "Step 2: Find module", disabled=""),
-                        conditionalPanel("network.available",
-                                         checkboxInput("addHighlyExpressedEdges", 
-                                                       label="Add highly expressed genes",
-                                                       value=FALSE),
-                                         selectInput("metaboliteActions", 
-                                                     label="Actions with atoms",
-                                                     c("Connect atoms inside metabolite"="connectAtomsInsideMetabolite", 
-                                                       "Collapse atoms into metabolites"="collapseAtomsIntoMetabolites",
-                                                       "None" = "NoAction"),
-                                                     selected="NoAction")
-                        )
-                    ),
-                    conditionalPanel("module.available",
-                                     h3("Module summary"),
-                                     uiOutput("moduleSummary"),
-                                     downloadButton("downloadPDF", "PDF"),
-                                     downloadButton("downloadModule", "XGMML"),
-                                     downloadButton("downloadXlsx", "XLSX")
-                    ),
-                    div(id="legend",
-                        p(),
-                        div(img(src="img/log2FCscale.svg"))
-                    ),
-                    p(),
-                    downloadButton("downloadVizMap", "Cytoscape VizMap")
-                ),
-                myMainPanel(
-                    h3("Module"),
-                    #div(id="module", class="graph-output")
-                    #conditionalPanel("module.available",
-                    #                 tableOutput('table')),
-                    #uiOutput("module")
-                    ShinyCyJSOutput(outputId = 'module', width = "100%", height = "100vh")
-                )
-            )
-        ),
-        
-        helpPanel <- fixedRow(
-            mainPanel(id="helpPanel",
-                      includeMarkdown(system.file("help.markdown", package="ShinyGATOM")))),
-        
-        aboutPanel <- fixedRow(
-            mainPanel(includeMarkdown(system.file("about.markdown", package="ShinyGATOM")))),
-        
-        shinyUI(
-            fluidPage(
-                tags$head(
-                    tags$script(src="www/svg-pan-zoom.min.js"),
-                    tags$script(src="www/d3.v3.min.js"),
-                    #tags$script(src="www/d3.v3.js"),
-                    tags$script(src="www/gam.js"),
-                    tags$link(rel="stylesheet", href="www/gam.css"),
-                    includeScript(system.file("ga.js", package="ShinyGATOM")),
-                    tags$title("Shiny GAM")
-                ),
-                
-                includeHTML(system.file("misc.xhtml", package="ShinyGATOM")),
-                div(id="updateEsParameters", class="js-output"),
-                
-                titlePanel("Shiny GATOM: integrated analysis of genes and metabolites"),
-                div(id="initialized", class="js-output"),
-                
-                fixedRow(
-                    column(12,
-                           tabsetPanel(
-                               tabPanel("Work", workPanel),
-                               tabPanel("Help", helpPanel),
-                               tabPanel("About", aboutPanel)
-                           )
-                    ))
-            )
-        )
-        )
-    
-    
-    
+
     #source("./functions.R")
     #source("./config.R")
-    
+
     #data("met.id.map")
     #data("kegg.human.network")
     #data("kegg.mouse.network")
     #data("kegg.arabidopsis.network")
     #data("kegg.yeast.network")
-    
+
     #networks <- list(
     #    "mmu"="kegg.mouse.network",
     #    "hsa"="kegg.human.network",
     #    "ath"="kegg.arabidopsis.network",
     #    "sce"="kegg.yeast.network"
     #    )
-    
-    
-    
-    
-    
+
+
+
+
+
     server <- (function(input, output, session) {
-        
+
         network_type <- list(
             "kegg"="network.kegg",
             "rhea"="network.rhea"
         )
-        
-        
-        
+
+
+
         v.solver <- virgo_solver(cplex_dir="./cplex/", penalty=0.01, timelimit=240)
         attr(v.solver, "description") <- "Virgo Solver (time limit = 4m)"
-        
-        
+
+
         v2.solver <- virgo_solver(cplex_dir=NULL,  penalty=0.01, timelimit=30)
         #v2.solver <- virgo_solver(cplex_dir="$CPLEX_HOME", penalty=0.01, timelimit=30)
         attr(v2.solver, "description") <- "Virgo Solver (time limit = 30s)"
-        
-        
+
+
         # Path to example data
         #example.gene.de.path <- "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
         #example.met.de.path <- "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.met.de.tsv"
         #example.gene.de.path <- "data/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
         #example.met.de.path <- "data/Ctrl.vs.MandLPSandIFNg.met.de.tsv"
-        
+
         # Loading example data
         #example.gene.de <- force(as.data.table(read.table(text=getURL(example.gene.de.path), stringsAsFactors=FALSE, header=1)))
         example.gene.de <- force(as.data.table(read.table(example.gene.de.path, stringsAsFactors=FALSE, header=1)))
         attr(example.gene.de, "name") <- basename(example.gene.de.path)
-        
+
         #fread
         #example.met.de <- force(as.data.table(read.table(text=getURL(example.met.de.path), stringsAsFactors=FALSE, header=1)))
         example.met.de <- force(as.data.table(read.table(example.met.de.path, stringsAsFactors=FALSE, header=1)))
         attr(example.met.de, "name") <- basename(example.met.de.path)
-        
+
         longProcessStart <- function() {
             session$sendCustomMessage(type='showWaitMessage', list(value=T))
         }
-        
+
         longProcessStop <- function() {
             session$sendCustomMessage(type='showWaitMessage', list(value=F))
         }
-        
+
         output$initialized <- renderJs('$("#initializing").hide()')
-        
+
         queryValues <- reactiveValues()
-        
+
         observe({
             query <- parseQueryString(session$clientData$url_search)
             if ("organism" %in% names(query)) {
                 updateSelectInput(session, "network", selected=query$organism)
                 #values$queryOrganism <- query$organism
-            } 
-            
+            }
+
             if ("geneDE_key" %in% names(query)) {
                 geneDE_key <- gsub("[^a-z0-9]", "", query$geneDE_key)
                 loginfo("found key: %s", geneDE_key)
@@ -317,32 +98,32 @@ ShinyGATOM <- function() {
                 queryValues$geneDE_key <- geneDE_key
             }
         })
-        
+
         loadExample <- reactive({
             input$loadExampleGeneDE || input$loadExampleMetDE
         })
-        
+
         getNetwork <- reactive({
             #net <- if (loadExample()) {
             #    "kegg.mouse.network"
             #} else {
             #    networks[[input$network]]
             #}
-            
+
             #lazyLoad(network_type[[input$network_type]])
-            
+
             if (input$network_type == "kegg"){
                 path.to.network <- path.to.kegg.network
             } else {
                 path.to.network <- path.to.rhea.network
             }
-            
-            res <- lazyReadRDS(network_type[[input$network_type]], 
+
+            res <- lazyReadRDS(network_type[[input$network_type]],
                                path = path.to.network)
             res
         })
-        
-        
+
+
         geneDEInput <- reactive({
             if (loadExample()) {
                 if (input$loadExampleGeneDE) {
@@ -350,18 +131,18 @@ ShinyGATOM <- function() {
                 }
                 return(NULL)
             }
-            
+
             if (!is.null(input$geneDE) && !is(input$geneDE, "data.frame")) {
                 # Value was reset
                 return(NULL)
             }
-            
+
             if (!is.null(input$geneDE)) {
                 loginfo("GeneDE file:")
                 loginfo(capture.output(str(input$geneDE)))
                 loginfo("reading gene.de: %s", input$geneDE$name)
                 loginfo("      from file: %s", input$geneDE$datapath)
-                
+
                 path <- input$geneDE$datapath
                 deName <- input$geneDE$name
             } else if (!is.null(queryValues$geneDE_key)) {
@@ -376,8 +157,8 @@ ShinyGATOM <- function() {
                 # User has not uploaded a file yet and we don't have a key
                 return(NULL)
             }
-            
-            
+
+
             res <- read.table.smart.de.gene(path, idsList=gene.id.map)
             logdebug(capture.output(str(res)))
             if (!all(necessary.de.fields %in% names(res))) {
@@ -385,37 +166,37 @@ ShinyGATOM <- function() {
                 if (grepl("xlsx?$", input$geneDE$name)) {
                     stop("We do not support excel files yet, please, use tab-separated files instead")
                 } else{
-                    stop(paste0("Genomic differential expression data should contain at least these fields: ", 
+                    stop(paste0("Genomic differential expression data should contain at least these fields: ",
                                 paste(necessary.de.fields, collapse=", ")))
                 }
             }
             attr(res, "name") <- deName
             res
         })
-        
+
         geneIdsType <- reactive({
             data <- geneDEInput()
             if (is.null(data)) {
                 return(NULL)
             }
-            
+
             lazyLoad("org.Mm.eg.gatom.anno", path.to.org.Mm.eg.gatom.anno)
             res <- getGeneDEMeta(data, org.gatom.anno=org.Mm.eg.gatom.anno)$idType
-            
+
             if (length(res) != 1) {
                 stop("Can't determine type of IDs for genes")
             }
             res
         })
-        
-        
+
+
         output$geneDESummary <- renderUI({
             gene.de <- geneDEInput()
             ids.type <- geneIdsType()
             if (is.null(gene.de)) {
                 return("There is no genomic data")
             }
-            
+
             div(
                 HTML(
                     vector2html(c(
@@ -425,7 +206,7 @@ ShinyGATOM <- function() {
                     ))),
                 p("Top DE genes:"))
         })
-        
+
         output$geneDETable <- renderTable({
             data <- geneDEInput()
             if (is.null(data)) {
@@ -433,37 +214,37 @@ ShinyGATOM <- function() {
             }
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
-        
+
         geneMapsCreate <- reactive({
             lazyLoad("org.Mm.eg.gatom.anno", path = path.to.org.Mm.eg.gatom.anno)
-            
+
             entrez2refseq <- data.table(na.omit(org.Mm.eg.gatom.anno$mapFrom$RefSeq))
             colnames(entrez2refseq) <- c("Entrez", "RefSeq")
             entrez2ensembl <- data.table(na.omit(org.Mm.eg.gatom.anno$mapFrom$Ensembl))
             colnames(entrez2ensembl) <- c("Entrez", "Ensembl")
             entrez2symbol <- data.table(na.omit(org.Mm.eg.gatom.anno$mapFrom$Symbol))
             colnames(entrez2symbol) <- c("Entrez", "Symbol")
-            
+
             entrez2name <- org.Mm.eg.gatom.anno$genes
             colnames(entrez2name) <- c("Entrez", "gene_symbol")
-            
+
             res <- merge(entrez2name, entrez2refseq, all.x=T, by="Entrez")
             res <- merge(res, entrez2ensembl, all.x=T, by="Entrez")
             res <- merge(res, entrez2symbol, all.x=T, by="Entrez")
-            
+
             res <- na.omit(res)
             res <- data.table(res)
             res
         })
-        
+
         notMappedGenes <- reactive({
             lazyLoad("org.Mm.eg.gatom.anno", path = path.to.org.Mm.eg.gatom.anno)
             geneIT <- geneIdsType()
-            
+
             if (is.null(geneIT)) {
                 return(NULL)
             }
-            
+
             #if (geneIT == network$gene.ids) {
             if (geneIT == org.Mm.eg.gatom.anno$baseId) {
                 return(NULL)
@@ -472,7 +253,7 @@ ShinyGATOM <- function() {
             notMapped <- setdiff(geneDEInput()$ID, gene.id.map[[geneIT]])
             notMapped
         })
-        
+
         output$geneDENotMapped <- renderUI({
             data <- geneDEInput()
             if (is.null(data)) {
@@ -480,10 +261,10 @@ ShinyGATOM <- function() {
             }
             notMapped <- notMappedGenes()
             network <- getNetwork()
-            
+
             div(
                 p(sprintf("Not mapped to %s: %s", org.Mm.eg.gatom.anno$baseId, length(notMapped))),
-                if (length(notMapped) > 0) { 
+                if (length(notMapped) > 0) {
                     p("Top unmapped genes:",
                       a("show",
                         id="geneDENotMappedTableShowBtn",
@@ -495,10 +276,10 @@ ShinyGATOM <- function() {
                         onclick='$("#geneDENotMappedTable").hide();$("#geneDENotMappedTableShowBtn").show();$("#geneDENotMappedTableHideBtn").hide()',
                         style="display:none"),
                       tag("script", '$("#geneDENotMappedTable").hide()')
-                    ) 
+                    )
                 } else NULL)
         })
-        
+
         output$geneDENotMappedTable <- renderTable({
             data <- geneDEInput()
             if (is.null(data)) {
@@ -508,12 +289,12 @@ ShinyGATOM <- function() {
             if (length(notMapped) == 0) {
                 return(NULL)
             }
-            
+
             data <- data[order(pval)]
             data <- data[ID %in% notMapped]
             format(as.data.frame(head(data, n=20)), digits=3)
         })
-        
+
         metDEInput <- reactive({
             if (loadExample()) {
                 if (input$loadExampleMetDE) {
@@ -521,8 +302,8 @@ ShinyGATOM <- function() {
                 }
                 return(NULL)
             }
-            
-            
+
+
             if (is.null(input$metDE)) {
                 # User has not uploaded a file yet
                 return(NULL)
@@ -531,12 +312,12 @@ ShinyGATOM <- function() {
                 # Value was reset
                 return(NULL)
             }
-            
+
             loginfo("MetDE file:")
             loginfo(capture.output(str(input$metDE)))
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
-            
+
             res <- read.table.smart.de.met(input$metDE$datapath)
             logdebug(capture.output(str(res)))
             if (!all(necessary.de.fields %in% names(res))) {
@@ -544,20 +325,20 @@ ShinyGATOM <- function() {
                 if (grepl("xlsx?$", input$metDE$name)) {
                     stop("We do not support excel files yet, please, use tab-separated files instead")
                 } else {
-                    stop(paste0("Metabolic differential expression data should contain at least these fields: ", 
+                    stop(paste0("Metabolic differential expression data should contain at least these fields: ",
                                 paste(necessary.de.fields, collapse=", ")))
                 }
             }
             attr(res, "name") <- input$metDE$name
             res
         })
-        
+
         metIdsType <- reactive({
             data <- metDEInput()
             if (is.null(data)) {
                 return(NULL)
             }
-            
+
             if (input$network_type == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = path.to.met.kegg.db)
@@ -567,22 +348,22 @@ ShinyGATOM <- function() {
                                            path = path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-            
+
             res <- getMetDEMeta(data, met.db=met.db)$idType
-            
+
             if (length(res) != 1) {
                 stop("Can't determine type of IDs for metabolites")
             }
             res
         })
-        
-        
+
+
         metMapsCreate <- reactive({
             if (input$network_type == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = path.to.met.kegg.db)
                 met.db <- met.kegg.db
-                
+
                 hmdb2kegg <- data.table(na.omit(met.db$mapFrom$HMDB))
                 colnames(hmdb2kegg) <- c("HMDB", "KEGG")
                 kegg2name <- met.db$metabolites[ , c("metabolite", "metabolite_name")]
@@ -592,7 +373,7 @@ ShinyGATOM <- function() {
                 met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
                                            path = path.to.met.rhea.db)
                 met.db <- met.rhea.db
-                
+
                 hmdb2chebi <- data.table(na.omit(met.db$mapFrom$HMDB))
                 colnames(hmdb2chebi) <- c("HMDB", "ChEBI")
                 chebi2name <- met.db$metabolites[ , c("metabolite", "metabolite_name")]
@@ -603,14 +384,14 @@ ShinyGATOM <- function() {
             res <- data.table(res)
             res
         })
-        
+
         output$metDESummary <- renderUI({
             met.de <- metDEInput()
             ids.type <- metIdsType()
             if (is.null(met.de)) {
                 return("There is no metabolic data")
             }
-            
+
             div(
                 HTML(
                     vector2html(c(
@@ -620,7 +401,7 @@ ShinyGATOM <- function() {
                     ))),
                 p("Top DE metabolites:"))
         })
-        
+
         output$metDETable <- renderTable({
             data <- metDEInput()
             if (is.null(data)) {
@@ -628,10 +409,10 @@ ShinyGATOM <- function() {
             }
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
-        
+
         notMappedMets <- reactive({
             #network <- getNetwork()
-            
+
             if (input$network_type == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = path.to.met.kegg.db)
@@ -641,20 +422,20 @@ ShinyGATOM <- function() {
                                            path = path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-            
+
             metIT <- metIdsType()
-            
+
             if (is.null(metIT)) {
                 return(NULL)
             }
-            
+
             if (metIT == met.db$baseId) {
                 return(NULL)
             }
             met.id.map <- metMapsCreate()
             notMapped <- setdiff(metDEInput()$ID, met.id.map[[metIT]])
         })
-        
+
         output$metDENotMapped <- renderUI({
             data <- metDEInput()
             if (is.null(data)) {
@@ -662,7 +443,7 @@ ShinyGATOM <- function() {
             }
             notMapped <- notMappedMets()
             network <- getNetwork()
-            
+
             if (input$network_type == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = path.to.met.kegg.db)
@@ -672,10 +453,10 @@ ShinyGATOM <- function() {
                                            path = path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-            
+
             div(
                 p(sprintf("Not mapped to %s: %s", met.db$baseId, length(notMapped))),
-                if (length(notMapped) > 0) { 
+                if (length(notMapped) > 0) {
                     p("Top unmapped metabolites:",
                       a("show",
                         id="metDENotMappedTableShowBtn",
@@ -687,10 +468,10 @@ ShinyGATOM <- function() {
                         onclick='$("#metDENotMappedTable").hide();$("#metDENotMappedTableShowBtn").show();$("#metDENotMappedTableHideBtn").hide()',
                         style="display:none"),
                       tag("script", '$("#metDENotMappedTable").hide()')
-                    ) 
+                    )
                 } else NULL)
         })
-        
+
         output$metDENotMappedTable <- renderTable({
             data <- metDEInput()
             if (is.null(data)) {
@@ -700,17 +481,17 @@ ShinyGATOM <- function() {
             if (length(notMapped) == 0) {
                 return(NULL)
             }
-            
+
             data <- data[order(pval)]
             data <- data[ID %in% notMapped]
             format(as.data.frame(head(data, n=20)), digits=3)
         })
-        
-        output$updateEsParameters <- renderJs({        
+
+        output$updateEsParameters <- renderJs({
             selected <- if (!is.null(metDEInput())) "edges" else "nodes"
             return(sprintf("$('#reactionsAs')[0].selectize.setValue('%s')", selected))
         })
-        
+
         experimentTag <- reactive({
             geneData <- geneDEInput()
             metData <- metDEInput()
@@ -720,21 +501,21 @@ ShinyGATOM <- function() {
             tag <- gsub("\\.([ct]sv|txt)$", "", tag)
             tag
         })
-        # 
+        #
         #     output$reactionsAsHolder <- renderUI({
         #         gene.de <- geneDEInput()
-        # 
+        #
         #         met.de <- metDEInput()
-        # 
+        #
         #         selected <- if (!is.null(met.de)) "edges" else "nodes"
-        # 
-        #         selectInput("reactionsAs", 
+        #
+        #         selectInput("reactionsAs",
         #                     label="Interpret reactions as",
         #                       c("edges"="edges", "nodes"="nodes"),
         #                       selected=selected)
         #     })
-        
-        
+
+
         esInput <- reactive({
             input$preprocess
             loginfo("Preprocessing")
@@ -742,28 +523,28 @@ ShinyGATOM <- function() {
             network <- isolate(getNetwork())
             gene.de <- isolate(geneDEInput())
             gene.ids <- isolate(geneIdsType())
-            
+
             met.de <- isolate(metDEInput())
             met.ids <- isolate(metIdsType())
             tag <- isolate(experimentTag())
-            
+
             if (is.null(gene.de) && is.null(met.de)) {
                 return(NULL)
             }
-            
+
             longProcessStart()
-            
+
             tryCatch({
                 if (!is.null(gene.de)) {
                     gene.de <- gene.de[which(gene.de$pval < 1),]
                 }
-                
+
                 if (!is.null(met.de)) {
                     met.de <- met.de[which(met.de$pval < 1),]
                 }
-                
+
                 reactions.as.edges = isolate(input$reactionsAs) == "edges"
-                
+
                 if (input$network_type == "kegg"){
                     met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                                path = path.to.met.kegg.db)
@@ -775,9 +556,9 @@ ShinyGATOM <- function() {
                     met.db <- met.rhea.db
                     met.to.filter = NULL
                 }
-                
+
                 nodesAs = isolate(input$nodesAs)
-                
+
                 es <- makeMetabolicGraph(network=network,
                                          #nodesAs="atoms",
                                          nodesAs=nodesAs,
@@ -786,27 +567,27 @@ ShinyGATOM <- function() {
                                          met.db=met.db,
                                          met.de=metDEInput(),
                                          met.to.filter=met.to.filter)
-                
-                # g$has.genes <- 
+
+                # g$has.genes <-
                 #es$tag <- tag
                 attr(es, "tag") <- tag
                 es
             }, finally=longProcessStop())
         })
-        
+
         output$networkSummary <- reactive({
             g <- esInput()
             if (is.null(g)) {
                 return("There is no built network")
             }
-            
+
             vector2html(c(
                 "number of nodes" = length(V(g)),
                 "number of edges" = length(E(g))
             ))
         })
-        
-        
+
+
         kMet <- reactive({
             if (!input$nullkmet) {
                 input$kmet
@@ -814,7 +595,7 @@ ShinyGATOM <- function() {
                 NULL
             }
         })
-        
+
         kGene <- reactive({
             if (!input$nullkgene) {
                 input$kgene
@@ -822,10 +603,10 @@ ShinyGATOM <- function() {
                 NULL
             }
         })
-        
+
         gene.de <- isolate(geneDEInput())
         met.de <- isolate(metDEInput())
-        
+
         if (!is.null(gene.de) && !is.null(met.de)) {
             k.gene <- isolate(kGene())
             k.met <- isolate(kMet())
@@ -839,16 +620,16 @@ ShinyGATOM <- function() {
             k.gene <- NULL
             k.met <- NULL
         }
-        
-        
+
+
         metBUM <- reactive({
             g <- esInput()
             k.met <- isolate(kMet())
             res <- fitMetsToBUM(g=g, k.met=k.met)
             res
         })
-        
-        
+
+
         genBUM <- reactive({
             g <- esInput()
             if (is.null(g)) {
@@ -858,8 +639,8 @@ ShinyGATOM <- function() {
             res <- fitGenesToBUM(g=g, k.gene=k.gene)
             res
         })
-        
-        
+
+
         output$genesBUMPlot <- renderPlot({
             g <- esInput()
             if (is.null(g)) {
@@ -869,9 +650,9 @@ ShinyGATOM <- function() {
             plot(gen.bum)
             #list(plot(gen.bum))
         })
-        
-        
-        
+
+
+
         output$metsBUMPlot <- renderPlot({
             g <- esInput()
             if (is.null(g)) {
@@ -880,31 +661,31 @@ ShinyGATOM <- function() {
             met.bum <- isolate(metBUM())
             plot(met.bum)
         })
-        
-        
+
+
         output$networkParameters <- reactive({
             es <- NULL
             tryCatch({
                 es <- esInput()
             }, error=function(e) {})
-            
+
             if (is.null(es)) {
                 return("")
             }
-            
+
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
-            
+
             has.genes <- FALSE
             has.mets <- FALSE
-            
+
             if (!is.null(gene.de)) {
                 has.genes <- TRUE
-            } 
+            }
             if (!is.null(met.de)) {
                 has.mets <- TRUE
             }
-            
+
             res <- paste0(
                 makeJsAssignments(
                     network.available = TRUE,
@@ -920,18 +701,18 @@ ShinyGATOM <- function() {
                     network.hasMets = TRUE
                 )
             )
-            
-            
+
+
             if (isolate(input$autoFindModule)) {
                 res <- paste0(res, generateFDRs(es))
                 res <- paste0(res, '$("#find").trigger("click");')
             }
-            
+
             res <- paste0(res, '$("#find").removeAttr("disabled").addClass("btn-default");')
             res <- paste0(res, '$("#resetFDRs").removeAttr("disabled").addClass("btn-default");')
             res
         })
-        
+
         output$enableMakeNetwork <- renderJs({
             res <- ""
             canRun <- FALSE
@@ -940,12 +721,12 @@ ShinyGATOM <- function() {
                 gIT <- geneIdsType()
                 metDE <- metDEInput()
                 mIT <- metIdsType()
-                
+
                 canRun <- !is.null(geneDE) || !is.null(metDE)
             }, error=function(e) {
                 # if anything happened, not running
             })
-            
+
             if (canRun) {
                 res <- paste0(res, '$("#runStep1").removeAttr("disabled").addClass("btn-default");')
                 res <- paste0(res, '$("#runAll").removeAttr("disabled").addClass("btn-default");')
@@ -955,20 +736,20 @@ ShinyGATOM <- function() {
             }
             res
         })
-        
+
         output$showModulePanel <- renderJs({
             if (!is.null(esInput())) { return("mp = $('#module-panel'); mp[0].scrollIntoView();")
             }
             # return("mp = $('#module-panel'); mp.hide();")
             return("")
         })
-        
+
         getSolver <- reactive({
             es <- esInput()
             if (is.null(es)) {
                 return(NULL)
             }
-            
+
             if (input$solveToOptimality) {
                 #h.solver
                 v.solver
@@ -979,7 +760,7 @@ ShinyGATOM <- function() {
                 #h2.solver
             }
         })
-        
+
         output$solverString <- reactive({
             es <- esInput()
             solver <- getSolver()
@@ -989,7 +770,7 @@ ShinyGATOM <- function() {
                 ""
             }
         })
-        
+
         esScoredInput <- reactive({
             input$find
             #met.fdr <- isolate(metFDR())
@@ -997,13 +778,13 @@ ShinyGATOM <- function() {
             #absent.met.score <- isolate(input$absentMetScore)
             #absent.rxn.score <- isolate(input$absentRxnScore)
             #absent.rxn.score <- 0
-            
+
             es <- isolate(esInput())
-            
+
             if (is.null(es)) {
                 return(NULL)
             }
-            
+
             longProcessStart()
             loginfo(paste0(attr(es, "tag"),".mp"#, # min p-value
                            #if (es$reactions.as.edges) ".re" else ".rn",
@@ -1013,11 +794,11 @@ ShinyGATOM <- function() {
                            #".ams=", absent.met.score
                            #, ".ars=", absent.rxn.score
             ))
-            
-            
+
+
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
-            
+
             if (!is.null(gene.de) && !is.null(met.de)) {
                 k.gene <- isolate(kGene())
                 k.met <- isolate(kMet())
@@ -1031,16 +812,16 @@ ShinyGATOM <- function() {
                 k.gene <- NULL
                 k.met <- NULL
             }
-            
+
             met.bum <- isolate(metBUM())
             gen.bum <- isolate(genBUM())
-            
-            res <- scoreGraph2(g=es, k.gene=k.gene, k.met=k.met, 
+
+            res <- scoreGraph2(g=es, k.gene=k.gene, k.met=k.met,
                                metabolite.bum=met.bum, gene.bum=gen.bum
             )
-            
-            
-            res$description.string <- paste0(attr(es, "tag")#, 
+
+
+            res$description.string <- paste0(attr(es, "tag")#,
                                              #if (es$reactions.as.edges) ".re" else ".rn",
                                              #if (TRUE) ".re" else ".rn",
                                              #".mf=", format(log10(met.fdr), digist=2),
@@ -1050,33 +831,33 @@ ShinyGATOM <- function() {
             )
             res
         })
-        
+
         rawModuleInput <- reactive({
             input$find
-            
+
             esScored <- isolate(esScoredInput())
-            
+
             if (is.null(esScored)) {
                 return(NULL)
             }
-            
+
             longProcessStart()
             tryCatch({
                 solver <- isolate(getSolver())
                 #res <- induced.subgraph(esScored$subnet.scored, V(esScored$subnet.scored)[adj(adj(1))])
-                
+
                 #res <- findModule(esScored, solver=solver)
-                
-                inst <- normalize_sgmwcs_instance(esScored, 
-                                                  nodes.weight.column = "score", 
-                                                  edges.weight.column = "score", 
-                                                  nodes.group.by = "signal", 
-                                                  edges.group.by = "signal", 
+
+                inst <- normalize_sgmwcs_instance(esScored,
+                                                  nodes.weight.column = "score",
+                                                  edges.weight.column = "score",
+                                                  nodes.group.by = "signal",
+                                                  edges.group.by = "signal",
                                                   group.only.positive = TRUE)
-                
+
                 res <- solve_mwcsp(solver, inst)
                 res <- res$graph
-                
+
                 if (is.null(res) || length(V(res)) == 0) {
                     stop("No module found")
                 }
@@ -1084,48 +865,48 @@ ShinyGATOM <- function() {
                 res
             }, finally=longProcessStop())
         })
-        
+
         moduleInput <- reactive({
             module <- rawModuleInput()
             if (is.null(module)) {
                 return(NULL)
             }
-            
+
             # for consistency
             module <- remove.vertex.attribute(module, "score")
             module <- remove.edge.attribute(module, "score")
-            
+
             es <- isolate(esInput())
-            
+
             if (input$addHighlyExpressedEdges) {
                 module <- addHighlyExpressedEdges(module, es)
             }
-            
+
             #mets.actions = isolate(input$metaboliteActions)
-            
+
             if (input$metaboliteActions == "connectAtomsInsideMetabolite") {
                 module <- connectAtomsInsideMetabolite(module)
             } else if (input$metaboliteActions == "collapseAtomsIntoMetabolites") {
                 module <- collapseAtomsIntoMetabolites(module)
             }
-            
+
             module$description.string <- rawModuleInput()$description.string
-            
+
             module
         })
-        
+
         output$moduleSummary <- reactive({
             module <- moduleInput()
             if (is.null(module)) {
                 return("There is no module yet")
             }
-            
+
             vector2html(c(
                 "number of nodes" = length(V(module)),
                 "number of edges" = length(E(module))
             ))
         })
-        
+
         output$moduleParameters <- reactive({
             m <- NULL
             tryCatch({
@@ -1133,10 +914,10 @@ ShinyGATOM <- function() {
             }, error=function(e) {})
             makeJsAssignments(
                 module.available = !is.null(m)
-            )        
+            )
         })
-        
-        
+
+
         #output$table <- renderTable({
         #    module <- moduleInput()
         #    if (is.null(module)) {
@@ -1148,13 +929,13 @@ ShinyGATOM <- function() {
         #    #module_e
         #    module_v
         #})
-        
+
         getColumnNames <- function(dataInput){
             return(
                 dataName = colnames(dataInput)
             )
         }
-        
+
         prepareForshinyCyJS <- reactive({
             module <- moduleInput()
             if (is.null(module)) {
@@ -1164,45 +945,45 @@ ShinyGATOM <- function() {
             edge.table <- as_data_frame(module, what="edges")
             rownames(vertex.table) <- NULL
             save(module, file="module.rda")
-            
+
             vertex.tooltip <- as.data.frame(lapply(colnames(vertex.table), function(x){
                 lapply(vertex.table[x], function(y){
                     paste0("<b>", x, ":</b> ", y)
                 })
             }))
-            
+
             vertex.table$tooltip <- paste(vertex.tooltip$name, vertex.tooltip$metabolite,
-                                          vertex.tooltip$label, vertex.tooltip$url, 
-                                          vertex.tooltip$pval, vertex.tooltip$HMDB, 
-                                          vertex.tooltip$baseMean, vertex.tooltip$logPval, 
-                                          vertex.tooltip$signal, vertex.tooltip$signalRank, 
+                                          vertex.tooltip$label, vertex.tooltip$url,
+                                          vertex.tooltip$pval, vertex.tooltip$HMDB,
+                                          vertex.tooltip$baseMean, vertex.tooltip$logPval,
+                                          vertex.tooltip$signal, vertex.tooltip$signalRank,
                                           vertex.tooltip$index, sep="<br>")
-            
+
             nodes <- getDotNodeStyleAttributes2(vertex.table)
             edges <- getDotEdgeStyleAttributes2(edge.table)
-            
+
             nodes = buildElems(nodes, type = 'Node')
-            edges = buildElems(edges, type = 'Edge')  
-            
+            edges = buildElems(edges, type = 'Edge')
+
             obj = shinyCyJS(c(nodes, edges))
             obj
         })
-        
+
         output$module <- renderShinyCyJS(prepareForshinyCyJS())
-        
+
         ########################################################################
         output$downloadNetwork <- downloadHandler(
             filename = reactive({ paste0("network.", tolower(esInput()$network$organism), ".xgmml") }),
             content = function(file) {
                 saveModuleToXgmml(esInput()$subnet, file=file, name=tolower(esInput()$network$organism))
             })
-        
+
         output$downloadModule <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".xgmml") }),
             content = function(file) {
                 saveModuleToXgmml(moduleInput(), file=file, moduleInput()$description.string)
             })
-        
+
         dotFile <- reactive({
             m <- moduleInput()
             if (is.null(m)) {
@@ -1215,40 +996,40 @@ ShinyGATOM <- function() {
             longProcessStop()
             res
         })
-        
+
         svgFile <- reactive({
             df <- dotFile()
             if (is.null(df)) {
                 return(NULL)
             }
             res <- paste0(df, ".svg")
-            system2("neato", c("-Tsvg", 
+            system2("neato", c("-Tsvg",
                                "-o", res,
                                df), stderr=NULL)
             res
         })
-        
+
         pdfFile <- reactive({
             df <- dotFile()
             if (is.null(df)) {
                 return(NULL)
             }
             res <- paste0(df, ".pdf")
-            system2("neato", c("-Tpdf", 
+            system2("neato", c("-Tpdf",
                                "-o", res,
                                df), stderr=NULL)
             res
         })
-        
+
         output$downloadXlsx <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".xlsx") }),
             content = function(file) {
                 module <- moduleInput()
                 es <- isolate(esScoredInput())
                 stopifnot(require(xlsx))
-                
+
                 wb <- createWorkbook()
-                
+
                 vTable <- data.table(get.vertex.attributes(module))
                 eTable <- data.table(get.edge.attributes(module, include.ends=T))
                 #if (es$reactions.as.edges) {
@@ -1262,32 +1043,32 @@ ShinyGATOM <- function() {
                     rxnTable <- vTable[nodeType == "rxn",]
                     rxnTable[, nodeType := NULL]
                 }
-                
+
                 metTable <- removeNAColumns(metTable)
                 rxnTable <- removeNAColumns(rxnTable)
-                
+
                 addDataFrame(metTable, createSheet(wb, "metabolites"), row.names=F)
                 addDataFrame(rxnTable, createSheet(wb, "reactions"), row.names=F)
-                
+
                 metInModule <- metTable$name
                 geneInModule <- rxnTable$origin
-                
+
                 saveWorkbook(wb, file)
             })
-        
+
         output$downloadPDF <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".pdf") }),
             content = function(file) {
-                file.copy(pdfFile(), file) 
+                file.copy(pdfFile(), file)
             })
-        
+
         output$downloadDot <- downloadHandler(
-            
+
             filename = reactive({ paste0(moduleInput()$description.string, ".dot") }),
             content = function(file) {
-                file.copy(dotFile(), file) 
+                file.copy(dotFile(), file)
             })
-        
+
         output$downloadVizMap <- downloadHandler(
             filename = "GAM_VizMap.xml",
             content = function(file) {
@@ -1295,20 +1076,20 @@ ShinyGATOM <- function() {
                     from=system.file("GAM_VizMap.xml", package="GAM"),
                     to=file)
             })
-        
+
         output$GAMVersion <- renderUI({
             p(paste("GAM version:", sessionInfo()$otherPkgs$GAM$Revision))
         })
-        
+
         output$geneDEExample <- renderUI({
             a("here", href=example.gene.de.path, target="_blank")
         })
-        
+
         output$metDEExample <- renderUI({
             a("here", href=example.met.de.path, target="_blank")
         })
-        
-        
+
+
         output$downloadVizMapInHelp <- downloadHandler(
             filename = "GAM_VizMap.xml",
             content = function(file) {
@@ -1317,5 +1098,5 @@ ShinyGATOM <- function() {
                     to=file)
             })
     })
-    shinyApp(ui, server)
+    shinyApp(app_ui, server)
 }
