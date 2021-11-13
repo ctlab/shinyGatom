@@ -4,7 +4,7 @@
 \alias{ShinyGATOM}
 \title{starts shiny GATOM application}
 \usage{
-ShinyGATOM()
+ShinyGATOM(config_file = system.file("config.yml", package = "ShinyGATOM"))
 }
 \description{
 starts shiny GATOM application
