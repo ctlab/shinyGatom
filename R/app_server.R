@@ -1,5 +1,6 @@
 #' @import mwcsr
 #' @import data.table
+#' @import logging
 app_server <- function(config_file) {
 
     conf <- config::get(file=config_file, use_parent = FALSE)
