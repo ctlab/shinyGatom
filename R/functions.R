@@ -22,7 +22,7 @@ getDotColor2 <- function(log2FC) {
     if (is.na(log2FC)) {
         return("#7777ff")
     }
-    
+
     if (log2FC > 0) {
         col <- upRamp2(min(1, abs(log2FC) / 2))
     } else {
@@ -85,34 +85,34 @@ scoreGraph2 <- function(g, k.gene, k.met,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    
+
     if (!is.null(k.met)) {
         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         if(is.null(metabolite.bum)) {
             warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
-        
+
         if (metabolite.bum$a > 0.5) {
             V(g)$score <- 0
             warning("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution")
-            
+
         } else {
             vertex.threshold <- if (k.met > length(pvalsToFit)) 1 else {
                 sort(pvalsToFit)[k.met]
             }
-            
+
             vertex.threshold <- min(vertex.threshold,
                                     BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
-            
+
             met.fdr <- .reversefdrThreshold(vertex.threshold, metabolite.bum)
-            
+
             .messagef("Metabolite p-value threshold: %f", vertex.threshold)
             .messagef("Metabolite BU alpha: %f", metabolite.bum$a)
             .messagef("FDR for metabolites: %f", met.fdr)
-            
+
             V(g)$score <- with(vertex.table,
                                (metabolite.bum$a - 1) *
                                    (log(.replaceNA(pval, 1)) - log(vertex.threshold)))
@@ -122,33 +122,33 @@ scoreGraph2 <- function(g, k.gene, k.met,
     else {
         V(g)$score <- 0
         V(g)$signal <- ""
-        
+
     }
-    
+
     if (!is.null(k.gene)) {
         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         if(is.null(gene.bum)){
             warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
-        
+
         if(gene.bum$a > 0.5) {
             E(g)$score <- 0
             warning("Edge scores have been assigned to 0 due to an inappropriate p-value distribution")
-            
+
         } else {
             edge.threshold <- if (k.gene > length(pvalsToFit)) 1 else {
                 sort(pvalsToFit)[k.gene]
             }
-            
+
             edge.threshold <- min(edge.threshold,
                                   BioNet::fdrThreshold(edge.threshold.min, gene.bum))
-            
+
             gene.fdr <- .reversefdrThreshold(edge.threshold, gene.bum)
-            
+
             .messagef("Gene p-value threshold: %f", edge.threshold)
             .messagef("Gene BU alpha: %f", gene.bum$a)
             .messagef("FDR for genes: %f", gene.fdr)
-            
+
             E(g)$score <- with(edge.table,
                                (gene.bum$a - 1) *
                                    (log(.replaceNA(pval, 1)) - log(edge.threshold)))
@@ -162,7 +162,7 @@ scoreGraph2 <- function(g, k.gene, k.met,
     if (raw) {
         return(g)
     }
-    
+
     res <- normalize_sgmwcs_instance(g,
                                      nodes.weight.column = "score",
                                      edges.weight.column = "score",
@@ -175,7 +175,7 @@ scoreGraph2 <- function(g, k.gene, k.met,
 
 ############################################### NEW FUNCTIONS
 
-fitGenesToBUM <- function(g, 
+fitGenesToBUM <- function(g,
                           k.gene,
                           show.warnings=TRUE
 ) {
@@ -184,9 +184,9 @@ fitGenesToBUM <- function(g,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    
+
     if (!is.null(k.gene)) {
         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
@@ -196,7 +196,7 @@ fitGenesToBUM <- function(g,
 }
 
 
-fitMetsToBUM <- function(g, 
+fitMetsToBUM <- function(g,
                          k.met,
                          show.warnings=TRUE
 ) {
@@ -205,9 +205,9 @@ fitMetsToBUM <- function(g,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
-    
+
     if (!is.null(k.met)) {
         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         #metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F)
@@ -220,20 +220,24 @@ fitMetsToBUM <- function(g,
 lazyReadRDS <- function(name, path, envir=.GlobalEnv) {
     if (!name %in% ls(envir=envir)) {
         message(paste0("No ", name, ", loading"))
-        res <- readRDS(path)
+        if (startsWith(path, "http://") || startsWith(path, "https://")) {
+            res <- readRDS(url(path))
+        } else {
+            res <- readRDS(path)
+        }
         assign(name, res, envir=envir)
         message("Done")
         return(res)
     } else {
         return(get(name, envir=envir))
-    } 
+    }
 }
 
 # Don't need anymore?
 lazyLoad <- function(name, path, envir=.GlobalEnv) {
     if (!name %in% ls(envir=envir)) {
         message(paste0("No ", name, ", loading"))
-        
+
         do.call("load", list(path), envir=envir)
         message("Done")
     }
@@ -259,10 +263,10 @@ gmwcs.solver <- function (gmwcs, nthreads = 1, timeLimit = -1) {
         if (!score.nodes) {
             V(network)$score <- 0
         }
-        
+
         BioNet::writeHeinzNodes(network, file = nodes.file, use.score = TRUE)
         BioNet::writeHeinzEdges(network, file = edges.file, use.score = score.edges)
-        system2(gmwcs, c("-n", nodes.file, "-e", edges.file, 
+        system2(gmwcs, c("-n", nodes.file, "-e", edges.file,
                          "-m", nthreads, "-t", timeLimit
                          ,             "-b"
         ))
@@ -278,7 +282,7 @@ gmwcs.solver <- function (gmwcs, nthreads = 1, timeLimit = -1) {
     }
 }
 
-heinz21.solver <- function(heinz2, nthreads = 1, timeLimit = -1) 
+heinz21.solver <- function(heinz2, nthreads = 1, timeLimit = -1)
 {
     function(network) {
         network.orig <- network
@@ -297,14 +301,14 @@ heinz21.solver <- function(heinz2, nthreads = 1, timeLimit = -1)
         BioNet::writeHeinzNodes(network, file = nodes.file, use.score = TRUE)
         BioNet::writeHeinzEdges(network, file = edges.file, use.score = score.edges)
         solution.file <- file.path(graph.dir, "sol.txt")
-        system2(paste0(heinz2), c("-n", nodes.file, "-e", edges.file, 
-                                  "-o", solution.file, "-m", nthreads, "-v", 
+        system2(paste0(heinz2), c("-n", nodes.file, "-e", edges.file,
+                                  "-o", solution.file, "-m", nthreads, "-v",
                                   0, "-t", timeLimit))
         if (!file.exists(solution.file)) {
             warning("Solution file not found")
             return(NULL)
         }
-        res <- BioNet::readHeinzGraph(node.file = solution.file, network = network, 
+        res <- BioNet::readHeinzGraph(node.file = solution.file, network = network,
                                       format = "igraph")
         if (score.edges) {
             res <- GAM:::deMWCSize(res, network.orig)
@@ -314,30 +318,30 @@ heinz21.solver <- function(heinz2, nthreads = 1, timeLimit = -1)
 }
 
 normalizeName <- function(x) {
-    gsub("[^a-z0-9]", "", tolower(x)) 
+    gsub("[^a-z0-9]", "", tolower(x))
 }
 
 
 read.table.smart <- function(path, ...) {
-    fields <- list(...)    
+    fields <- list(...)
     conn <- file(path)
     header <- readLines(conn, n=1)
     close(conn)
-    
+
     seps <- c("\t", " ", ",", ";")
     sep <- seps[which.max(table(unlist(strsplit(header, "")))[seps])]
-    
+
     res <- read.table(path, sep=sep, header=T, stringsAsFactors=F, check.names=F, quote='"')
     res <- as.data.table(res, keep.rownames=is.character(attr(res, "row.names")))
-    
+
     oldnames <- character(0)
     newnames <- character(0)
-    
-    for (field in names(fields)) {        
+
+    for (field in names(fields)) {
         if (field %in% colnames(res)) {
             next
         }
-        
+
         z <- na.omit(
             match(
                 normalizeName(c(field, fields[[field]])),
@@ -345,11 +349,11 @@ read.table.smart <- function(path, ...) {
         if (length(z) == 0) {
             next
         }
-        
+
         oldnames <- c(oldnames, colnames(res)[z[1]])
         newnames <- c(newnames, field)
     }
-    
+
     logdebug("smart renaming")
     logdebug("from: %s", paste0(oldnames, collapse=" "))
     logdebug("to: %s", paste0(newnames, collapse=" "))
@@ -371,11 +375,11 @@ read.table.smart.de.gene <- function(path, idsList) {
                 normalizeName(c("ID", "gene id", "gene", "entrez", "", "rn", "symbol")),
                 normalizeName(colnames(res))))
         if (length(z) == 0) {
-            setnames(res, colnames(res)[1], "ID")    
+            setnames(res, colnames(res)[1], "ID")
         } else {
-            setnames(res, colnames(res)[z[1]], "ID")    
+            setnames(res, colnames(res)[z[1]], "ID")
         }
-        
+
     } else {
         if (idColumn$column != "ID" && "ID" %in% colnames(res)) {
             setnames(res, "ID", "ID.old")
@@ -396,7 +400,7 @@ read.table.smart.de.met <- function(path) {
 renderGraph <- function(expr, env=parent.frame(), quoted=FALSE) {
     # Convert the expression + environment into a function
     func <- exprToFunction(expr, env, quoted)
-    
+
     function() {
         val <- func()
         if (is.null(val)) {
@@ -437,10 +441,10 @@ vector2html <- function(v) {
 renderJs <- function(expr, env=parent.frame(), quoted=FALSE) {
     # Convert the expression + environment into a function
     func <- exprToFunction(expr, env, quoted)
-    
+
     function() {
         val <- func()
-        paste0(val, ";", 
+        paste0(val, ";",
                paste(sample(1:20, 10, replace=T), collapse=""))
     }
 }
@@ -469,13 +473,13 @@ makeJsAssignments  <- function(...) {
 }
 
 # adapted from shiny
-simpleSelectInput <- function (inputId, choices, selected = NULL) 
+simpleSelectInput <- function (inputId, choices, selected = NULL)
 {
     selectTag <- tags$select(id = inputId)
-    optionTags <- mapply(choices, names(choices), SIMPLIFY = FALSE, 
+    optionTags <- mapply(choices, names(choices), SIMPLIFY = FALSE,
                          USE.NAMES = FALSE, FUN = function(choice, name) {
                              optionTag <- tags$option(value = choice, name)
-                             if (choice %in% selected) 
+                             if (choice %in% selected)
                                  optionTag$attribs$selected = "selected"
                              optionTag
                          })
@@ -489,10 +493,10 @@ generateFDRs <- function(es) {
     if (is.null(es$fb.met) != is.null(es$fb.rxn)) {
         num.positive <- num.positive / 2
     }
-    
+
     if (!is.null(es$fb.met)) {
         fb <- es$fb.met
-        pvals <- with(es$met.de.ext, { x <- pval; names(x) <- ID; na.omit(x) })            
+        pvals <- with(es$met.de.ext, { x <- pval; names(x) <- ID; na.omit(x) })
         recMetFDR <- GAM:::recommendedFDR(fb, pvals, num.positive=num.positive)
         recAbsentMetScore <- min(GAM:::scoreValue(fb, 1, recMetFDR), -0.1)
         if (!is.null(es$fb.rxn)) {
@@ -501,14 +505,14 @@ generateFDRs <- function(es) {
         res <- paste0(res, sprintf('$("#metLogFDR").val(%.1f).trigger("change");', log10(recMetFDR)))
         res <- paste0(res, sprintf('$("#absentMetScore").val(%.1f).trigger("change");', recAbsentMetScore))
     }
-    
+
     if (!is.null(es$fb.rxn)) {
         fb <- es$fb.rxn
-        pvals <- with(es$rxn.de.ext, { x <- pval; names(x) <- ID; na.omit(x) })            
+        pvals <- with(es$rxn.de.ext, { x <- pval; names(x) <- ID; na.omit(x) })
         recRxnFDR <- GAM:::recommendedFDR(fb, pvals, num.positive=num.positive)
         res <- paste0(res, sprintf('$("#geneLogFDR").val(%.1f).trigger("change");', log10(recRxnFDR)))
     }
-    
+
     res
 }
 
@@ -526,28 +530,28 @@ findIdColumn <- function(de, idsList,
         de[sample(seq_len(nrow(de)), sample.size), ]
     }
     columnSamples <- lapply(de.sample, as.character)
-    
-    
+
+
     if (remove.ensembl.revisions) {
         columnSamples <- lapply(columnSamples, gsub,
                                 pattern="(ENS\\w*\\d*)\\.\\d*",
                                 replacement="\\1")
     }
-    
+
     ss <- sapply(columnSamples,
                  .intersectionSize, idsList[[1]])
-    
+
     if (max(ss) / nrow(de.sample) >= match.threshold) {
         # we found a good column with base IDs
         return(list(column=colnames(de)[which.max(ss)],
                     type=names(idsList)[1],
                     matchRatio=max(ss) / nrow(de.sample)))
     }
-    
+
     z <- .pairwiseCompare(.intersectionSize,
                           columnSamples,
                           idsList)
-    
+
     bestMatch <- which(z == max(z), arr.ind = TRUE)[1,]
     return(list(column=colnames(de)[bestMatch["row"]],
                 type=names(idsList)[bestMatch["col"]],
