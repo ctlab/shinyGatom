@@ -917,7 +917,7 @@ app_server <- function(config_file) {
             vertex.table <- as_data_frame(module, what="vertices")
             edge.table <- as_data_frame(module, what="edges")
             rownames(vertex.table) <- NULL
-            save(module, file="module.rda")
+            # save(module, file="module.rda")
 
             vertex.tooltip <- as.data.frame(lapply(colnames(vertex.table), function(x){
                 lapply(vertex.table[x], function(y){
