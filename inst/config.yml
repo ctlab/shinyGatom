@@ -11,7 +11,7 @@ default:
 
 local:
     example.gene.de.path:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.gene.de.tsv")
-    example.med.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.met.de.tsv")
+    example.met.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.met.de.tsv")
     path.to.kegg.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.kegg.rds")
     path.to.rhea.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.rhea.rds")
     path.to.met.kegg.db:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.kegg.db.rds")

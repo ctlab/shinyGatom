@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Mariia", "Emelianova", , "marri.bio.em@gmail.com", role = c("aut", "cre"))
 Description: A web-service for integrated network analysis of transcriptional and metabolic data.
-License: file LICENSE
+License: file LICENCE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
@@ -21,5 +21,6 @@ Imports:
     RCurl,
     shiny,
     shinyCyJS,
-    config
+    config,
+    gatom
 

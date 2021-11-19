@@ -1,5 +1,5 @@
 
-############################################### RE-USED FROM GATOM (without them doesn't work)
+############################################### RE-USED FROM GATOM (need to be exported first)
 
 .reversefdrThreshold <- function(pt, fb){
     pihat <- fb$lambda + (1 - fb$lambda) * fb$a
@@ -9,69 +9,77 @@
 
 .messagef <- function (...)  { message(sprintf(...)) }
 .warningf <- function (...)  { warning(sprintf(...)) }
-
 .replaceNA <- function(x, y) { ifelse(is.na(x), y, x) }
 
-############################################### EDITED FROM GATOM
+upRamp <- colorRamp(c("#cccccc", "#ff3333"))
+downRamp <- colorRamp(c("#cccccc", "green"))
 
-
-upRamp2 <- colorRamp(c("#cccccc", "#ff3333"))
-downRamp2 <- colorRamp(c("#cccccc", "green"))
-
-getDotColor2 <- function(log2FC) {
+getDotColor <- function(log2FC) {
     if (is.na(log2FC)) {
         return("#7777ff")
     }
     
     if (log2FC > 0) {
-        col <- upRamp2(min(1, abs(log2FC) / 2))
+        col <- upRamp(min(1, abs(log2FC) / 2))
     } else {
-        col <- downRamp2(min(1, abs(log2FC) / 2))
+        col <- downRamp(min(1, abs(log2FC) / 2))
     }
     rgb(col[,1], col[,2], col[,3], maxColorValue=255)
 }
 
-getDotSize2 <- function(logPval) {
+getDotSize <- function(logPval) {
     logPval[is.na(logPval)] <- 0
     return(pmin(0.2 - logPval/100/0.3, 0.5))
 }
 
-getDotNodeStyleAttributes2 <- function(attrs) {
+
+############################################### EDITED FROM GATOM
+
+
+getJsTooltip <- function(attr.values) {
+    attr.strings <- list()
+    attr.names <- names(attr.values)
+    for(i in seq_along(attr.values)) {
+        attr.strings[[i]] <- sprintf("<b>%s:</b> %s", attr.names[i], attr.values[[i]])
+    }
+    names(attr.strings) <- attr.names
+    apply(do.call("cbind", attr.strings), 1, paste0, collapse="<br>")
+}
+
+
+getJsNodeStyleAttributes <- function(attrs) {
     logPval <- if (!is.null(attrs$logPval)) attrs$logPval else 1
     with(attrs, data.frame(
-        width=sapply(logPval, getDotSize2) * 60,
-        height=sapply(logPval, getDotSize2) * 60,
+        width=sapply(logPval, getDotSize) * 60,
+        height=sapply(logPval, getDotSize) * 60,
         label=if (!is.null(attrs$label)) label else "",
         id=attrs$name,
         shape=if (!is.null(attrs$nodeType)) nodeShapeMap[nodeType] else "ellipse",
-        #fixedsize="true",
-        #style="filled",
-        fontSize=sapply(logPval, getDotSize2) * 25,
-        #color=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor2) else "grey",
-        bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor2) else "white",
+        fontSize=sapply(logPval, getDotSize) * 25,
+        bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor) else "white",
         borderWidth=4,
         borderColor="#eee",
         labelColor="black",
-        tooltip=attrs$tooltip
+        tooltip=getJsTooltip(attrs)
     ))
 }
 
 
-getDotEdgeStyleAttributes2 <- function(attrs) {
+getJsEdgeStyleAttributes <- function(attrs) {
     logPval <- if (!is.null(attrs$logPval)) attrs$logPval else 1
     with(attrs, data.frame(
         source=attrs$from,
         target=attrs$to,
         label=if (!is.null(attrs$label)) label else "",
         lineStyle="solid",
-        #width=sapply(logPval, getDotSize2) * 20,
-        #fontsize=sapply(logPval, getDotSize2) * 45,
-        lineColor=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor2) else "grey",
-        fontSize=sapply(logPval, getDotSize2) * 25
+        fontSize=sapply(logPval, getDotSize) * 25,
+        lineColor=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor) else "grey",
+        tooltip=getJsTooltip(attrs)
     ))
 }
 
 
+#' @import gatom
 scoreGraph2 <- function(g, k.gene, k.met,
                         vertex.threshold.min=0.1,
                         edge.threshold.min=0.1,
@@ -175,6 +183,26 @@ scoreGraph2 <- function(g, k.gene, k.met,
 
 ############################################### NEW FUNCTIONS
 
+prepareForshinyCyJS <- function(module){
+    if (is.null(module)) {
+        return(NULL)
+    }
+    
+    vertex.table <- as_data_frame(module, what="vertices")
+    edge.table <- as_data_frame(module, what="edges")
+    
+    nodes <- getJsNodeStyleAttributes(vertex.table)
+    edges <- getJsEdgeStyleAttributes(edge.table)
+    
+    nodes = buildElems(nodes, type = 'Node')
+    edges = buildElems(edges, type = 'Edge')
+    
+    res = shinyCyJS(c(nodes, edges))
+    res
+}
+
+
+#' @import gatom
 fitGenesToBUM <- function(g, 
                           k.gene,
                           show.warnings=TRUE
@@ -196,6 +224,7 @@ fitGenesToBUM <- function(g,
 }
 
 
+#' @import gatom
 fitMetsToBUM <- function(g, 
                          k.met,
                          show.warnings=TRUE
@@ -210,12 +239,12 @@ fitMetsToBUM <- function(g,
     
     if (!is.null(k.met)) {
         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        #metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F)
         warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
     }
     res <- metabolite.bum
     res
 }
+
 
 lazyReadRDS <- function(name, path, envir=.GlobalEnv) {
     if (!name %in% ls(envir=envir)) {
@@ -229,89 +258,7 @@ lazyReadRDS <- function(name, path, envir=.GlobalEnv) {
     } 
 }
 
-# Don't need anymore?
-lazyLoad <- function(name, path, envir=.GlobalEnv) {
-    if (!name %in% ls(envir=envir)) {
-        message(paste0("No ", name, ", loading"))
-        
-        do.call("load", list(path), envir=envir)
-        message("Done")
-    }
-}
-
 ############################################### OLD FUNCTIONS
-
-
-removeNAColumns <- function(d) {
-    keep <- !sapply(d, all %o% is.na)
-    d[, keep, with=F]
-}
-
-gmwcs.solver <- function (gmwcs, nthreads = 1, timeLimit = -1) {
-    function(network) {
-        network.orig <- network
-        score.edges <- "score" %in% list.edge.attributes(network)
-        score.nodes <- "score" %in% list.vertex.attributes(network)
-        graph.dir <- tempfile("graph")
-        dir.create(graph.dir)
-        edges.file <- file.path(graph.dir, "edges.txt")
-        nodes.file <- file.path(graph.dir, "nodes.txt")
-        if (!score.nodes) {
-            V(network)$score <- 0
-        }
-        
-        BioNet::writeHeinzNodes(network, file = nodes.file, use.score = TRUE)
-        BioNet::writeHeinzEdges(network, file = edges.file, use.score = score.edges)
-        system2(gmwcs, c("-n", nodes.file, "-e", edges.file, 
-                         "-m", nthreads, "-t", timeLimit
-                         ,             "-b"
-        ))
-        solution.file <- paste0(nodes.file, ".out")
-        if (!file.exists(solution.file)) {
-            warning("Solution file not found")
-            return(NULL)
-        }
-        res <- GAM:::readGraph(node.file = solution.file,
-                               edge.file = paste0(edges.file, ".out"),
-                               network = network)
-        return(res)
-    }
-}
-
-heinz21.solver <- function(heinz2, nthreads = 1, timeLimit = -1) 
-{
-    function(network) {
-        network.orig <- network
-        score.edges <- "score" %in% list.edge.attributes(network)
-        score.nodes <- "score" %in% list.vertex.attributes(network)
-        graph.dir <- tempfile("graph")
-        dir.create(graph.dir)
-        edges.file <- file.path(graph.dir, "edges.txt")
-        nodes.file <- file.path(graph.dir, "nodes.txt")
-        if (!score.nodes) {
-            V(network)$score <- 0
-        }
-        if (score.edges) {
-            network <- GAM:::MWCSize(network.orig)
-        }
-        BioNet::writeHeinzNodes(network, file = nodes.file, use.score = TRUE)
-        BioNet::writeHeinzEdges(network, file = edges.file, use.score = score.edges)
-        solution.file <- file.path(graph.dir, "sol.txt")
-        system2(paste0(heinz2), c("-n", nodes.file, "-e", edges.file, 
-                                  "-o", solution.file, "-m", nthreads, "-v", 
-                                  0, "-t", timeLimit))
-        if (!file.exists(solution.file)) {
-            warning("Solution file not found")
-            return(NULL)
-        }
-        res <- BioNet::readHeinzGraph(node.file = solution.file, network = network, 
-                                      format = "igraph")
-        if (score.edges) {
-            res <- GAM:::deMWCSize(res, network.orig)
-        }
-        return(res)
-    }
-}
 
 normalizeName <- function(x) {
     gsub("[^a-z0-9]", "", tolower(x)) 
@@ -357,6 +304,7 @@ read.table.smart <- function(path, ...) {
     res
 }
 
+
 read.table.smart.de <- function(path, ID=ID) {
     read.table.smart(path, ID=ID, pval=c("pvalue"), log2FC=c("log2foldchange", "logfc"), name.orig=c("name"))
 }
@@ -393,46 +341,16 @@ read.table.smart.de.met <- function(path) {
     res
 }
 
-renderGraph <- function(expr, env=parent.frame(), quoted=FALSE) {
-    # Convert the expression + environment into a function
-    func <- exprToFunction(expr, env, quoted)
-    
-    function() {
-        val <- func()
-        if (is.null(val)) {
-            return(list(nodes=list(), links=list()));
-        }
-        for (a in list.vertex.attributes(val)) {
-            if (!is.numeric(get.vertex.attribute(val, a))) {
-                next
-            }
-            print(a)
-            vs <- get.vertex.attribute(val, a)
-            vs[which(vs == Inf)] <- 1e100
-            vs[which(vs == -Inf)] <- -1e100
-            val <- set.vertex.attribute(val, a, index=V(val), value=vs)
-        }
-        for (a in list.edge.attributes(val)) {
-            if (!is.numeric(get.edge.attribute(val, a))) {
-                next
-            }
-            print(a)
-            vs <- get.edge.attribute(val, a)
-            vs[which(vs == Inf)] <- 1e100
-            vs[which(vs == -Inf)] <- -1e100
-            val <- set.edge.attribute(val, a, index=E(val), value=vs)
-        }
-        module2list(val)
-    }
-}
 
 necessary.de.fields <- c("ID", "pval")
+
 
 vector2html <- function(v) {
     paste0("<ul>\n",
            paste("<li>", names(v), ": ", v, "</li>\n", collapse=""),
            "</ul>\n")
 }
+
 
 renderJs <- function(expr, env=parent.frame(), quoted=FALSE) {
     # Convert the expression + environment into a function
@@ -444,6 +362,7 @@ renderJs <- function(expr, env=parent.frame(), quoted=FALSE) {
                paste(sample(1:20, 10, replace=T), collapse=""))
     }
 }
+
 
 toJsLiteral <- function(x) {
     if (is(x, "numeric")) {
@@ -462,58 +381,16 @@ toJsLiteral <- function(x) {
     }
 }
 
+
 makeJsAssignments  <- function(...) {
     args <- list(...)
     values <- sapply(args, toJsLiteral)
     paste0(names(values), " = ", values, ";\n", collapse="")
 }
 
-# adapted from shiny
-simpleSelectInput <- function (inputId, choices, selected = NULL) 
-{
-    selectTag <- tags$select(id = inputId)
-    optionTags <- mapply(choices, names(choices), SIMPLIFY = FALSE, 
-                         USE.NAMES = FALSE, FUN = function(choice, name) {
-                             optionTag <- tags$option(value = choice, name)
-                             if (choice %in% selected) 
-                                 optionTag$attribs$selected = "selected"
-                             optionTag
-                         })
-    selectTag <- tagSetChildren(selectTag, list = optionTags)
-    selectTag
-}
-
-generateFDRs <- function(es) {
-    res <- ""
-    num.positive = 150
-    if (is.null(es$fb.met) != is.null(es$fb.rxn)) {
-        num.positive <- num.positive / 2
-    }
-    
-    if (!is.null(es$fb.met)) {
-        fb <- es$fb.met
-        pvals <- with(es$met.de.ext, { x <- pval; names(x) <- ID; na.omit(x) })            
-        recMetFDR <- GAM:::recommendedFDR(fb, pvals, num.positive=num.positive)
-        recAbsentMetScore <- min(GAM:::scoreValue(fb, 1, recMetFDR), -0.1)
-        if (!is.null(es$fb.rxn)) {
-            recAbsentMetScore <- recAbsentMetScore * 5
-        }
-        res <- paste0(res, sprintf('$("#metLogFDR").val(%.1f).trigger("change");', log10(recMetFDR)))
-        res <- paste0(res, sprintf('$("#absentMetScore").val(%.1f).trigger("change");', recAbsentMetScore))
-    }
-    
-    if (!is.null(es$fb.rxn)) {
-        fb <- es$fb.rxn
-        pvals <- with(es$rxn.de.ext, { x <- pval; names(x) <- ID; na.omit(x) })            
-        recRxnFDR <- GAM:::recommendedFDR(fb, pvals, num.positive=num.positive)
-        res <- paste0(res, sprintf('$("#geneLogFDR").val(%.1f).trigger("change");', log10(recRxnFDR)))
-    }
-    
-    res
-}
-
 
 .intersectionSize <- function(...) { length(intersect(...))}
+
 
 findIdColumn <- function(de, idsList,
                          sample.size=1000,
@@ -553,6 +430,7 @@ findIdColumn <- function(de, idsList,
                 type=names(idsList)[bestMatch["col"]],
                 matchRatio=max(z) / nrow(de.sample)))
 }
+
 
 .pairwiseCompare <- function (FUN, list1, list2 = list1, ...)
 {

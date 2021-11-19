@@ -2,4 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rbuildignore
+ShinyGATOM_Cytoscape.Rproj
 data

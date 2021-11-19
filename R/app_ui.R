@@ -19,7 +19,7 @@ app_ui <- function(request) {
                    div(
                        class="alert alert-info",
                        role="alert",
-                       HTML('Like Shiny GAM? Check out <a href="https://artyomovlab.wustl.edu/phantasus">Phantasus</a> where you can <a href="https://artyomovlab.wustl.edu/phantasus/phantasus-tutorial.html">do differential expression and submit the results to Shiny GAM</a>')
+                       HTML('Like Shiny GATOM? Check out <a href="https://artyomovlab.wustl.edu/phantasus">Phantasus</a> where you can <a href="https://artyomovlab.wustl.edu/phantasus/phantasus-tutorial.html">do differential expression and submit the results to Shiny GATOM</a>')
                    )
             )
         ),
@@ -64,11 +64,6 @@ app_ui <- function(request) {
                                  fileInput("geneDE", "File with DE for genes"),
                                  fileInput("metDE", "File with DE for metabolites")
                 ),
-                #uiOutput("reactionsAsHolder"),
-                selectInput("reactionsAs",
-                            label="Interpret reactions as",
-                            c("edges"="edges", "nodes"="nodes"),
-                            selected="nodes"),
                 selectInput("nodesAs",
                             label="Interpret nodes as",
                             c("metabolites"="metabolites", "atoms"="atoms"),
@@ -80,7 +75,7 @@ app_ui <- function(request) {
                                      value=TRUE),
                                  actionButton("preprocess", label="Step 1: Make network")
                 ),
-                myActionButton("runAll",   label="Run step 1, autogenerate FDRs and run step 2",
+                myActionButton("runAll",   label="Make network and run step 2",
                                onclick='$("#autoFindModule")[0].checked=true; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
                                disabled=""),
                 div("or", style="text-align: center"),
@@ -101,15 +96,15 @@ app_ui <- function(request) {
                     uiOutput("metDETable"),
                     uiOutput("metDENotMapped"),
                     uiOutput("metDENotMappedTable")),
-                div(class="bottom-buffer",
+                div(id="network-panel", class="bottom-buffer",
                     h3("Network summary"),
                     uiOutput("networkSummary"),
                     conditionalPanel("network.available",
                                      downloadButton("downloadNetwork", "Download XGMML"),
                                      h4("BUM distribution for genes"),
-                                     # plotOutput("genesBUMPlot"),
+                                     plotOutput("genesBUMPlot", width = "600px", height = "600px"),
                                      h4("BUM distribution for metabolites"),
-                                     # plotOutput("metsBUMPlot")
+                                     plotOutput("metsBUMPlot", width = "600px", height = "600px")
                     )
                 ),
             )
@@ -124,7 +119,7 @@ app_ui <- function(request) {
                                      numericInput("kgene",
                                                   label=HTML("k.gene"),
                                                   max=100, min=0, value=25, step=1)),
-
+                    
                     conditionalPanel("network.hasMets",
                                      checkboxInput("nullkmet",
                                                    label="Don't use metabolites for scoring",
@@ -133,8 +128,7 @@ app_ui <- function(request) {
                                                   label=HTML("k.met"),
                                                   max=100, min=0, value=25, step=1)
                     ),
-
-                    #myActionButton("resetFDRs", "Autogenerate FDRs", disabled=""),
+                    
                     checkboxInput(
                         "solveToOptimality",
                         label="Try to solve to optimality",
@@ -159,8 +153,7 @@ app_ui <- function(request) {
                                  h3("Module summary"),
                                  uiOutput("moduleSummary"),
                                  downloadButton("downloadPDF", "PDF"),
-                                 downloadButton("downloadModule", "XGMML"),
-                                 downloadButton("downloadXlsx", "XLSX")
+                                 downloadButton("downloadModule", "XGMML")
                 ),
                 div(id="legend",
                     p(),
@@ -171,22 +164,18 @@ app_ui <- function(request) {
             ),
             myMainPanel(
                 h3("Module"),
-                #div(id="module", class="graph-output")
-                #conditionalPanel("module.available",
-                #                 tableOutput('table')),
-                #uiOutput("module")
                 ShinyCyJSOutput(outputId = 'module', width = "100%", height = "100vh")
             )
         )
     )
-
+    
     helpPanel <- fixedRow(
         mainPanel(id="helpPanel",
                   includeMarkdown(system.file("help.markdown", package="ShinyGATOM"))))
-
+    
     aboutPanel <- fixedRow(
         mainPanel(includeMarkdown(system.file("about.markdown", package="ShinyGATOM"))))
-
+    
     fluidPage(
         fluidPage(
             tags$head(
@@ -196,15 +185,15 @@ app_ui <- function(request) {
                 tags$script(src="www/gam.js"),
                 tags$link(rel="stylesheet", href="www/gam.css"),
                 includeScript(system.file("ga.js", package="ShinyGATOM")),
-                tags$title("Shiny GAM")
+                tags$title("Shiny GATOM")
             ),
-
+            
             includeHTML(system.file("misc.xhtml", package="ShinyGATOM")),
             div(id="updateEsParameters", class="js-output"),
-
+            
             titlePanel("Shiny GATOM: integrated analysis of genes and metabolites"),
             div(id="initialized", class="js-output"),
-
+            
             fixedRow(
                 column(12,
                        tabsetPanel(
