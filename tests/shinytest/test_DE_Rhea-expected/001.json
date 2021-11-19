@@ -1,0 +1,145 @@
+{
+  "input": {
+    "addHighlyExpressedEdges": false,
+    "autoFindModule": true,
+    "find": 0,
+    "geneDE": null,
+    "kgene": 25,
+    "kmet": 25,
+    "loadExampleGeneDE": true,
+    "loadExampleMetDE": true,
+    "metaboliteActions": "NoAction",
+    "metDE": null,
+    "network": "mmu",
+    "network_type": "rhea",
+    "nodesAs": "atoms",
+    "nullkgene": false,
+    "nullkmet": false,
+    "preprocess": 0,
+    "resetInput": 0,
+    "runAll": 0,
+    "runStep1": 0,
+    "solveToOptimality": false
+  },
+  "output": {
+    "enableMakeNetwork": "$(\"#runStep1\").removeAttr(\"disabled\").addClass(\"btn-default\");$(\"#runAll\").removeAttr(\"disabled\").addClass(\"btn-default\");;19641092811118",
+    "geneDENotMapped": {
+      "html": "<div>\n  <p>Not mapped to Entrez: 98<\/p>\n  <p>\n    Top unmapped genes:\n    <a id=\"geneDENotMappedTableShowBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#geneDENotMappedTable&quot;).show();$(&quot;#geneDENotMappedTableShowBtn&quot;).hide();$(&quot;#geneDENotMappedTableHideBtn&quot;).show()\">show<\/a>\n    <a id=\"geneDENotMappedTableHideBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#geneDENotMappedTable&quot;).hide();$(&quot;#geneDENotMappedTableShowBtn&quot;).show();$(&quot;#geneDENotMappedTableHideBtn&quot;).hide()\" style=\"display:none\">hide<\/a>\n    <script>$(\"#geneDENotMappedTable\").hide()<\/script>\n  <\/p>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "geneDENotMappedTable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> NM_001135115 <\/td> <td> 3.31e-12 <\/td> <td>  4.319 <\/td> <td> 1136.55 <\/td> <\/tr>\n  <tr> <td> NM_001243039_2 <\/td> <td> 2.00e-10 <\/td> <td>  3.723 <\/td> <td> 4895.04 <\/td> <\/tr>\n  <tr> <td> NM_029000_2 <\/td> <td> 2.00e-10 <\/td> <td>  3.723 <\/td> <td> 4895.04 <\/td> <\/tr>\n  <tr> <td> NM_001243040_2 <\/td> <td> 2.01e-10 <\/td> <td>  3.723 <\/td> <td> 4893.65 <\/td> <\/tr>\n  <tr> <td> NM_001039160_2 <\/td> <td> 2.01e-10 <\/td> <td>  3.723 <\/td> <td> 4893.65 <\/td> <\/tr>\n  <tr> <td> NM_001145164_2 <\/td> <td> 4.95e-10 <\/td> <td>  7.778 <\/td> <td>  565.43 <\/td> <\/tr>\n  <tr> <td> NM_023124 <\/td> <td> 4.34e-07 <\/td> <td>  5.674 <\/td> <td>  226.92 <\/td> <\/tr>\n  <tr> <td> NM_001177544_2 <\/td> <td> 1.95e-04 <\/td> <td> -3.827 <\/td> <td>   20.10 <\/td> <\/tr>\n  <tr> <td> NM_178185_2 <\/td> <td> 2.06e-04 <\/td> <td> -3.815 <\/td> <td>   19.95 <\/td> <\/tr>\n  <tr> <td> NM_009695 <\/td> <td> 2.20e-04 <\/td> <td>   -Inf <\/td> <td>   11.57 <\/td> <\/tr>\n  <tr> <td> NM_001164215 <\/td> <td> 7.12e-03 <\/td> <td> -1.631 <\/td> <td>  136.52 <\/td> <\/tr>\n  <tr> <td> NM_001251826 <\/td> <td> 7.79e-03 <\/td> <td> -2.462 <\/td> <td>   28.78 <\/td> <\/tr>\n  <tr> <td> NM_026611_2 <\/td> <td> 2.59e-02 <\/td> <td>  1.382 <\/td> <td>  194.81 <\/td> <\/tr>\n  <tr> <td> NM_001162881 <\/td> <td> 5.88e-02 <\/td> <td> -0.936 <\/td> <td>  364.46 <\/td> <\/tr>\n  <tr> <td> NM_177047 <\/td> <td> 6.63e-02 <\/td> <td> -2.286 <\/td> <td>   15.23 <\/td> <\/tr>\n  <tr> <td> NM_027101 <\/td> <td> 6.95e-02 <\/td> <td>  1.511 <\/td> <td>  116.25 <\/td> <\/tr>\n  <tr> <td> NM_173434_2 <\/td> <td> 8.94e-02 <\/td> <td>  1.645 <\/td> <td>   90.94 <\/td> <\/tr>\n  <tr> <td> NM_009444 <\/td> <td> 1.41e-01 <\/td> <td>  0.796 <\/td> <td>  278.02 <\/td> <\/tr>\n  <tr> <td> NM_001109990 <\/td> <td> 1.58e-01 <\/td> <td> -5.338 <\/td> <td>    3.82 <\/td> <\/tr>\n  <tr> <td> NM_001025388_2 <\/td> <td> 1.62e-01 <\/td> <td>  1.049 <\/td> <td>   89.43 <\/td> <\/tr>\n   <\/tbody> <\/table>",
+    "geneDESummary": {
+      "html": "<div>\n  <ul>\n<li> name :  Ctrl.vs.MandLPSandIFNg.gene.de.tsv <\/li>\n<li> length :  16829 <\/li>\n<li> ID type :  RefSeq <\/li>\n<\/ul>\n\n  <p>Top DE genes:<\/p>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "geneDETable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> NM_008730 <\/td> <td> 2.89e-42 <\/td> <td> -12.39 <\/td> <td>  490 <\/td> <\/tr>\n  <tr> <td> NM_172621 <\/td> <td> 3.85e-30 <\/td> <td>  12.64 <\/td> <td> 1388 <\/td> <\/tr>\n  <tr> <td> NM_013653 <\/td> <td> 2.16e-29 <\/td> <td>   8.58 <\/td> <td> 3164 <\/td> <\/tr>\n  <tr> <td> NM_001004174 <\/td> <td> 1.34e-26 <\/td> <td>   8.07 <\/td> <td> 3670 <\/td> <\/tr>\n  <tr> <td> NM_011198 <\/td> <td> 1.80e-26 <\/td> <td>   7.98 <\/td> <td> 1857 <\/td> <\/tr>\n  <tr> <td> NM_021274 <\/td> <td> 2.17e-26 <\/td> <td>   8.02 <\/td> <td> 3065 <\/td> <\/tr>\n   <\/tbody> <\/table>",
+    "genesBUMPlot": {
+      "src": "[image data sha1: 8c9e3d0b23f660be8ed328a2499b471f4d6448f5]",
+      "width": 600,
+      "height": 600,
+      "alt": "Plot object",
+      "coordmap": {
+        "panels": [
+          {
+            "domain": {
+              "left": -0.04,
+              "right": 1.04,
+              "bottom": -0.04,
+              "top": 1.04
+            },
+            "range": {
+              "left": 0,
+              "right": 600,
+              "bottom": 599,
+              "top": -1
+            },
+            "log": {
+              "x": null,
+              "y": null
+            },
+            "mapping": {
+
+            }
+          }
+        ],
+        "dims": {
+          "width": 600,
+          "height": 600
+        }
+      }
+    },
+    "initialized": "$(\"#initializing\").hide();151613814124119",
+    "metDENotMapped": {
+      "html": "<div>\n  <p>Not mapped to ChEBI: 1810<\/p>\n  <p>\n    Top unmapped metabolites:\n    <a id=\"metDENotMappedTableShowBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#metDENotMappedTable&quot;).show();$(&quot;#metDENotMappedTableShowBtn&quot;).hide();$(&quot;#metDENotMappedTableHideBtn&quot;).show()\">show<\/a>\n    <a id=\"metDENotMappedTableHideBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#metDENotMappedTable&quot;).hide();$(&quot;#metDENotMappedTableShowBtn&quot;).show();$(&quot;#metDENotMappedTableHideBtn&quot;).hide()\" style=\"display:none\">hide<\/a>\n    <script>$(\"#metDENotMappedTable\").hide()<\/script>\n  <\/p>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "metDENotMappedTable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> HMDB00620 <\/td> <td> 8.83e-34 <\/td> <td>  3.117 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB02523 <\/td> <td> 5.93e-31 <\/td> <td>  2.510 <\/td> <td> 16.0 <\/td> <\/tr>\n  <tr> <td> HMDB01182 <\/td> <td> 1.53e-20 <\/td> <td>  2.250 <\/td> <td> 14.4 <\/td> <\/tr>\n  <tr> <td> HMDB02238 <\/td> <td> 2.33e-19 <\/td> <td>  1.446 <\/td> <td> 11.7 <\/td> <\/tr>\n  <tr> <td> HMDB00613 <\/td> <td> 2.67e-19 <\/td> <td>  1.714 <\/td> <td> 15.5 <\/td> <\/tr>\n  <tr> <td> HMDB00368 <\/td> <td> 2.98e-13 <\/td> <td>  0.695 <\/td> <td> 13.6 <\/td> <\/tr>\n  <tr> <td> HMDB00345 <\/td> <td> 2.98e-13 <\/td> <td>  0.695 <\/td> <td> 13.6 <\/td> <\/tr>\n  <tr> <td> HMDB00640 <\/td> <td> 2.98e-13 <\/td> <td>  0.695 <\/td> <td> 13.6 <\/td> <\/tr>\n  <tr> <td> HMDB11753 <\/td> <td> 4.39e-13 <\/td> <td>  0.735 <\/td> <td> 16.4 <\/td> <\/tr>\n  <tr> <td> HMDB00230 <\/td> <td> 3.88e-12 <\/td> <td> -0.578 <\/td> <td> 16.3 <\/td> <\/tr>\n  <tr> <td> HMDB00773 <\/td> <td> 3.88e-12 <\/td> <td> -0.578 <\/td> <td> 16.3 <\/td> <\/tr>\n  <tr> <td> HMDB02931 <\/td> <td> 1.21e-10 <\/td> <td> -0.549 <\/td> <td> 19.7 <\/td> <\/tr>\n  <tr> <td> HMDB02299 <\/td> <td> 1.54e-10 <\/td> <td> -0.510 <\/td> <td> 16.4 <\/td> <\/tr>\n  <tr> <td> HMDB02001 <\/td> <td> 2.16e-10 <\/td> <td> -0.393 <\/td> <td> 14.6 <\/td> <\/tr>\n  <tr> <td> HMDB00622 <\/td> <td> 2.16e-10 <\/td> <td> -0.393 <\/td> <td> 14.6 <\/td> <\/tr>\n  <tr> <td> HMDB01844 <\/td> <td> 2.16e-10 <\/td> <td> -0.393 <\/td> <td> 14.6 <\/td> <\/tr>\n  <tr> <td> HMDB00576 <\/td> <td> 2.16e-10 <\/td> <td> -0.393 <\/td> <td> 14.6 <\/td> <\/tr>\n  <tr> <td> HMDB00425 <\/td> <td> 4.88e-10 <\/td> <td>  0.457 <\/td> <td> 14.1 <\/td> <\/tr>\n  <tr> <td> HMDB06511 <\/td> <td> 1.53e-09 <\/td> <td>  2.096 <\/td> <td> 17.4 <\/td> <\/tr>\n  <tr> <td> HMDB00459 <\/td> <td> 7.72e-08 <\/td> <td>  0.527 <\/td> <td> 14.1 <\/td> <\/tr>\n   <\/tbody> <\/table>",
+    "metDESummary": {
+      "html": "<div>\n  <ul>\n<li> name :  Ctrl.vs.MandLPSandIFNg.met.de.tsv <\/li>\n<li> length :  2119 <\/li>\n<li> ID type :  HMDB <\/li>\n<\/ul>\n\n  <p>Top DE metabolites:<\/p>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "metDETable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> HMDB00634 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB00620 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB02092 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB00749 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB10720 <\/td> <td> 5.93e-31 <\/td> <td> 2.51 <\/td> <td> 16.0 <\/td> <\/tr>\n  <tr> <td> HMDB03407 <\/td> <td> 5.93e-31 <\/td> <td> 2.51 <\/td> <td> 16.0 <\/td> <\/tr>\n   <\/tbody> <\/table>",
+    "metsBUMPlot": {
+      "src": "[image data sha1: 8c9e3d0b23f660be8ed328a2499b471f4d6448f5]",
+      "width": 600,
+      "height": 600,
+      "alt": "Plot object",
+      "coordmap": {
+        "panels": [
+          {
+            "domain": {
+              "left": -0.04,
+              "right": 1.04,
+              "bottom": -0.04,
+              "top": 1.04
+            },
+            "range": {
+              "left": 0,
+              "right": 600,
+              "bottom": 599,
+              "top": -1
+            },
+            "log": {
+              "x": null,
+              "y": null
+            },
+            "mapping": {
+
+            }
+          }
+        ],
+        "dims": {
+          "width": 600,
+          "height": 600
+        }
+      }
+    },
+    "module": {
+      "x": null,
+      "evals": [
+
+      ],
+      "jsHooks": null,
+      "deps": [
+
+      ]
+    },
+    "moduleParameters": "module.available = false;\n",
+    "moduleSummary": "There is no module yet",
+    "networkParameters": "",
+    "networkSummary": "There is no built network",
+    "showModulePanel": ";41271615152128",
+    "solverString": ""
+  },
+  "export": {
+
+  }
+}

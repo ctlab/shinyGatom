@@ -1,0 +1,11 @@
+app <- ShinyDriver$new("../../")
+app$snapshotInit("mytest")
+
+app$setInputs(loadExampleGeneDE = TRUE)
+app$setInputs(loadExampleMetDE = TRUE)
+app$setInputs(preprocess = "click")
+app$setInputs(runAll = "click")
+app$setInputs(addHighlyExpressedEdges = TRUE)
+app$setInputs(metaboliteActions = "connectAtomsInsideMetabolite")
+app$setInputs(metaboliteActions = "collapseAtomsIntoMetabolites")
+app$snapshot()
