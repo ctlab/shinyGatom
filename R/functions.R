@@ -1,38 +1,4 @@
 
-############################################### RE-USED FROM GATOM (need to be exported first)
-
-.reversefdrThreshold <- function(pt, fb){
-    pihat <- fb$lambda + (1 - fb$lambda) * fb$a
-    (pihat * pt) / (-fb$lambda * pt^fb$a + pt^fb$a + fb$lambda * pt)
-}
-
-
-.messagef <- function (...)  { message(sprintf(...)) }
-.warningf <- function (...)  { warning(sprintf(...)) }
-.replaceNA <- function(x, y) { ifelse(is.na(x), y, x) }
-
-upRamp <- colorRamp(c("#cccccc", "#ff3333"))
-downRamp <- colorRamp(c("#cccccc", "green"))
-
-getDotColor <- function(log2FC) {
-    if (is.na(log2FC)) {
-        return("#7777ff")
-    }
-
-    if (log2FC > 0) {
-        col <- upRamp(min(1, abs(log2FC) / 2))
-    } else {
-        col <- downRamp(min(1, abs(log2FC) / 2))
-    }
-    rgb(col[,1], col[,2], col[,3], maxColorValue=255)
-}
-
-getDotSize <- function(logPval) {
-    logPval[is.na(logPval)] <- 0
-    return(pmin(0.2 - logPval/100/0.3, 0.5))
-}
-
-
 ############################################### EDITED FROM GATOM
 
 
@@ -50,13 +16,13 @@ getJsTooltip <- function(attr.values) {
 getJsNodeStyleAttributes <- function(attrs) {
     logPval <- if (!is.null(attrs$logPval)) attrs$logPval else 1
     with(attrs, data.frame(
-        width=sapply(logPval, getDotSize) * 60,
-        height=sapply(logPval, getDotSize) * 60,
+        width=sapply(logPval, gatom:::getDotSize) * 60,
+        height=sapply(logPval, gatom:::getDotSize) * 60,
         label=if (!is.null(attrs$label)) label else "",
         id=attrs$name,
         shape=if (!is.null(attrs$nodeType)) nodeShapeMap[nodeType] else "ellipse",
-        fontSize=sapply(logPval, getDotSize) * 25,
-        bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor) else "white",
+        fontSize=sapply(logPval, gatom:::getDotSize) * 25,
+        bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, gatom:::getDotColor) else "white",
         borderWidth=4,
         borderColor="#eee",
         labelColor="black",
@@ -72,8 +38,8 @@ getJsEdgeStyleAttributes <- function(attrs) {
         target=attrs$to,
         label=if (!is.null(attrs$label)) label else "",
         lineStyle="solid",
-        fontSize=sapply(logPval, getDotSize) * 25,
-        lineColor=if (!is.null(attrs$log2FC)) sapply(log2FC, getDotColor) else "grey",
+        fontSize=sapply(logPval, gatom:::getDotSize) * 25,
+        lineColor=if (!is.null(attrs$log2FC)) sapply(log2FC, gatom:::getDotColor) else "grey",
         tooltip=getJsTooltip(attrs)
     ))
 }
@@ -115,15 +81,15 @@ scoreGraph2 <- function(g, k.gene, k.met,
             vertex.threshold <- min(vertex.threshold,
                                     BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
 
-            met.fdr <- .reversefdrThreshold(vertex.threshold, metabolite.bum)
+            met.fdr <- gatom:::.reversefdrThreshold(vertex.threshold, metabolite.bum)
 
-            .messagef("Metabolite p-value threshold: %f", vertex.threshold)
-            .messagef("Metabolite BU alpha: %f", metabolite.bum$a)
-            .messagef("FDR for metabolites: %f", met.fdr)
+            gatom:::.messagef("Metabolite p-value threshold: %f", vertex.threshold)
+            gatom:::.messagef("Metabolite BU alpha: %f", metabolite.bum$a)
+            gatom:::.messagef("FDR for metabolites: %f", met.fdr)
 
             V(g)$score <- with(vertex.table,
                                (metabolite.bum$a - 1) *
-                                   (log(.replaceNA(pval, 1)) - log(vertex.threshold)))
+                                   (log(gatom:::.replaceNA(pval, 1)) - log(vertex.threshold)))
             V(g)$score <- V(g)$score * met.score.coef
         }
     }
@@ -151,15 +117,15 @@ scoreGraph2 <- function(g, k.gene, k.met,
             edge.threshold <- min(edge.threshold,
                                   BioNet::fdrThreshold(edge.threshold.min, gene.bum))
 
-            gene.fdr <- .reversefdrThreshold(edge.threshold, gene.bum)
+            gene.fdr <- gatom:::.reversefdrThreshold(edge.threshold, gene.bum)
 
-            .messagef("Gene p-value threshold: %f", edge.threshold)
-            .messagef("Gene BU alpha: %f", gene.bum$a)
-            .messagef("FDR for genes: %f", gene.fdr)
+            gatom:::.messagef("Gene p-value threshold: %f", edge.threshold)
+            gatom:::.messagef("Gene BU alpha: %f", gene.bum$a)
+            gatom:::.messagef("FDR for genes: %f", gene.fdr)
 
             E(g)$score <- with(edge.table,
                                (gene.bum$a - 1) *
-                                   (log(.replaceNA(pval, 1)) - log(edge.threshold)))
+                                   (log(gatom:::.replaceNA(pval, 1)) - log(edge.threshold)))
         }
     }
     else {

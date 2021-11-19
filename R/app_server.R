@@ -720,19 +720,6 @@ app_server <- function(config_file) {
                 k.met <- isolate(kMet())
             }
             
-            # if (!is.null(gene.de) && !is.null(met.de)) {
-            #     k.gene <- isolate(kGene())
-            #     k.met <- isolate(kMet())
-            # } else if (!is.null(gene.de)) {
-            #     k.gene <- isolate(kGene())
-            #     k.met <- NULL
-            # } else if (!is.null(met.de)) {
-            #     k.gene <- NULL
-            #     k.met <- isolate(kMet())
-            # } else {
-            #     k.gene <- NULL
-            #     k.met <- NULL
-            # }
             
             met.bum <- isolate(metBUM())
             gen.bum <- isolate(genBUM())
@@ -766,12 +753,7 @@ app_server <- function(config_file) {
             tryCatch({
                 solver <- isolate(getSolver())
                 
-                inst <- normalize_sgmwcs_instance(esScored,
-                                                  nodes.weight.column = "score",
-                                                  edges.weight.column = "score",
-                                                  nodes.group.by = "signal",
-                                                  edges.group.by = "signal",
-                                                  group.only.positive = TRUE)
+                inst <- esScored
                 
                 res <- solve_mwcsp(solver, inst)
                 res <- res$graph
