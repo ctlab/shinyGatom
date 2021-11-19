@@ -833,8 +833,7 @@ app_server <- function(config_file) {
         })
         
         output$module <- renderShinyCyJS(prepareForshinyCyJS(moduleInput()))
-        
-        
+
         output$downloadNetwork <- downloadHandler(
             filename = reactive({ paste0("network.", tolower(esInput()$network$organism), ".xgmml") }),
             content = function(file) {

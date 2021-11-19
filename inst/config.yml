@@ -1,6 +1,6 @@
 default:
     example.gene.de.path: "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
-    example.met.de.path:  "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
+    example.met.de.path:  "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.met.de.tsv"
 
     path.to.kegg.network:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds"
     path.to.rhea.network:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.rhea.rds"

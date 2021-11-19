@@ -18,7 +18,7 @@ getDotColor <- function(log2FC) {
     if (is.na(log2FC)) {
         return("#7777ff")
     }
-    
+
     if (log2FC > 0) {
         col <- upRamp(min(1, abs(log2FC) / 2))
     } else {
@@ -93,34 +93,34 @@ scoreGraph2 <- function(g, k.gene, k.met,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    
+
     if (!is.null(k.met)) {
         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         if(is.null(metabolite.bum)) {
             warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
-        
+
         if (metabolite.bum$a > 0.5) {
             V(g)$score <- 0
             warning("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution")
-            
+
         } else {
             vertex.threshold <- if (k.met > length(pvalsToFit)) 1 else {
                 sort(pvalsToFit)[k.met]
             }
-            
+
             vertex.threshold <- min(vertex.threshold,
                                     BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
-            
+
             met.fdr <- .reversefdrThreshold(vertex.threshold, metabolite.bum)
-            
+
             .messagef("Metabolite p-value threshold: %f", vertex.threshold)
             .messagef("Metabolite BU alpha: %f", metabolite.bum$a)
             .messagef("FDR for metabolites: %f", met.fdr)
-            
+
             V(g)$score <- with(vertex.table,
                                (metabolite.bum$a - 1) *
                                    (log(.replaceNA(pval, 1)) - log(vertex.threshold)))
@@ -130,33 +130,33 @@ scoreGraph2 <- function(g, k.gene, k.met,
     else {
         V(g)$score <- 0
         V(g)$signal <- ""
-        
+
     }
-    
+
     if (!is.null(k.gene)) {
         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         if(is.null(gene.bum)){
             warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
-        
+
         if(gene.bum$a > 0.5) {
             E(g)$score <- 0
             warning("Edge scores have been assigned to 0 due to an inappropriate p-value distribution")
-            
+
         } else {
             edge.threshold <- if (k.gene > length(pvalsToFit)) 1 else {
                 sort(pvalsToFit)[k.gene]
             }
-            
+
             edge.threshold <- min(edge.threshold,
                                   BioNet::fdrThreshold(edge.threshold.min, gene.bum))
-            
+
             gene.fdr <- .reversefdrThreshold(edge.threshold, gene.bum)
-            
+
             .messagef("Gene p-value threshold: %f", edge.threshold)
             .messagef("Gene BU alpha: %f", gene.bum$a)
             .messagef("FDR for genes: %f", gene.fdr)
-            
+
             E(g)$score <- with(edge.table,
                                (gene.bum$a - 1) *
                                    (log(.replaceNA(pval, 1)) - log(edge.threshold)))
@@ -170,7 +170,7 @@ scoreGraph2 <- function(g, k.gene, k.met,
     if (raw) {
         return(g)
     }
-    
+
     res <- normalize_sgmwcs_instance(g,
                                      nodes.weight.column = "score",
                                      edges.weight.column = "score",
@@ -212,9 +212,9 @@ fitGenesToBUM <- function(g,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    
+
     if (!is.null(k.gene)) {
         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
@@ -234,9 +234,9 @@ fitMetsToBUM <- function(g,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
-    
+
     if (!is.null(k.met)) {
         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
@@ -249,42 +249,48 @@ fitMetsToBUM <- function(g,
 lazyReadRDS <- function(name, path, envir=.GlobalEnv) {
     if (!name %in% ls(envir=envir)) {
         message(paste0("No ", name, ", loading"))
-        res <- readRDS(path)
+        if (startsWith(path, "http://") || startsWith(path, "https://")) {
+            res <- readRDS(url(path))
+        } else {
+            res <- readRDS(path)
+        }
         assign(name, res, envir=envir)
         message("Done")
         return(res)
     } else {
         return(get(name, envir=envir))
-    } 
+    }
 }
+
 
 ############################################### OLD FUNCTIONS
 
+
 normalizeName <- function(x) {
-    gsub("[^a-z0-9]", "", tolower(x)) 
+    gsub("[^a-z0-9]", "", tolower(x))
 }
 
 
 read.table.smart <- function(path, ...) {
-    fields <- list(...)    
+    fields <- list(...)
     conn <- file(path)
     header <- readLines(conn, n=1)
     close(conn)
-    
+
     seps <- c("\t", " ", ",", ";")
     sep <- seps[which.max(table(unlist(strsplit(header, "")))[seps])]
-    
+
     res <- read.table(path, sep=sep, header=T, stringsAsFactors=F, check.names=F, quote='"')
     res <- as.data.table(res, keep.rownames=is.character(attr(res, "row.names")))
-    
+
     oldnames <- character(0)
     newnames <- character(0)
-    
-    for (field in names(fields)) {        
+
+    for (field in names(fields)) {
         if (field %in% colnames(res)) {
             next
         }
-        
+
         z <- na.omit(
             match(
                 normalizeName(c(field, fields[[field]])),
@@ -292,11 +298,11 @@ read.table.smart <- function(path, ...) {
         if (length(z) == 0) {
             next
         }
-        
+
         oldnames <- c(oldnames, colnames(res)[z[1]])
         newnames <- c(newnames, field)
     }
-    
+
     logdebug("smart renaming")
     logdebug("from: %s", paste0(oldnames, collapse=" "))
     logdebug("to: %s", paste0(newnames, collapse=" "))
@@ -319,11 +325,11 @@ read.table.smart.de.gene <- function(path, idsList) {
                 normalizeName(c("ID", "gene id", "gene", "entrez", "", "rn", "symbol")),
                 normalizeName(colnames(res))))
         if (length(z) == 0) {
-            setnames(res, colnames(res)[1], "ID")    
+            setnames(res, colnames(res)[1], "ID")
         } else {
-            setnames(res, colnames(res)[z[1]], "ID")    
+            setnames(res, colnames(res)[z[1]], "ID")
         }
-        
+
     } else {
         if (idColumn$column != "ID" && "ID" %in% colnames(res)) {
             setnames(res, "ID", "ID.old")
@@ -355,10 +361,10 @@ vector2html <- function(v) {
 renderJs <- function(expr, env=parent.frame(), quoted=FALSE) {
     # Convert the expression + environment into a function
     func <- exprToFunction(expr, env, quoted)
-    
+
     function() {
         val <- func()
-        paste0(val, ";", 
+        paste0(val, ";",
                paste(sample(1:20, 10, replace=T), collapse=""))
     }
 }
@@ -403,28 +409,28 @@ findIdColumn <- function(de, idsList,
         de[sample(seq_len(nrow(de)), sample.size), ]
     }
     columnSamples <- lapply(de.sample, as.character)
-    
-    
+
+
     if (remove.ensembl.revisions) {
         columnSamples <- lapply(columnSamples, gsub,
                                 pattern="(ENS\\w*\\d*)\\.\\d*",
                                 replacement="\\1")
     }
-    
+
     ss <- sapply(columnSamples,
                  .intersectionSize, idsList[[1]])
-    
+
     if (max(ss) / nrow(de.sample) >= match.threshold) {
         # we found a good column with base IDs
         return(list(column=colnames(de)[which.max(ss)],
                     type=names(idsList)[1],
                     matchRatio=max(ss) / nrow(de.sample)))
     }
-    
+
     z <- .pairwiseCompare(.intersectionSize,
                           columnSamples,
                           idsList)
-    
+
     bestMatch <- which(z == max(z), arr.ind = TRUE)[1,]
     return(list(column=colnames(de)[bestMatch["row"]],
                 type=names(idsList)[bestMatch["col"]],
