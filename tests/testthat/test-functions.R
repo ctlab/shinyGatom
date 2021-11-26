@@ -10,13 +10,6 @@ test_that("lazyReadRDS works with remote files", {
 })
 
 
-# load("/home/masha/Research/RCode/RShiny/single_quotes.Rda")
-# vertex.table <- as_data_frame(module, what="vertices")
-# rownames(vertex.table) <- NULL
-# edge.table <- as_data_frame(module, what="edges")
-# write.csv(vertex.table, "/home/masha/Research/RCode/RShiny/single_quotes.csv")
-
-
 test_that("Node attributes are created", {
     load("/home/masha/Research/RCode/RShiny/example_module2.Rda")
     vertex.table <- as_data_frame(module, what="vertices")
@@ -237,17 +230,6 @@ test_that("Graph is scored when k.met is NULL", {
     
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
                           metabolite.bum=met.bum, gene.bum=gene.bum)
-    
-    expect_true(!is.null(V(sg)$score))
-})
-
-
-test_that("Gene DE table is read properly", {
-    example.gene.de <- force(fread("/home/masha/Research/RCode/RShiny/data/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"))
-    attr(example.gene.de, "name") <- basename("/home/masha/Research/RCode/RShiny/data/Ctrl.vs.MandLPSandIFNg.gene.de.tsv")
-    example.met.de <- force(fread("/home/masha/Research/RCode/RShiny/data/Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
-    attr(example.met.de, "name") <- basename("/home/masha/Research/RCode/RShiny/data/Ctrl.vs.MandLPSandIFNg.met.de.tsv")
-    
     
     expect_true(!is.null(V(sg)$score))
 })
