@@ -22,7 +22,7 @@
     "solveToOptimality": false
   },
   "output": {
-    "enableMakeNetwork": "$(\"#runStep1\").removeAttr(\"disabled\").addClass(\"btn-default\");$(\"#runAll\").removeAttr(\"disabled\").addClass(\"btn-default\");;158141810171317153",
+    "enableMakeNetwork": "$(\"#runStep1\").removeAttr(\"disabled\").addClass(\"btn-default\");$(\"#runAll\").removeAttr(\"disabled\").addClass(\"btn-default\");;5112099201691314",
     "geneDENotMapped": {
       "html": "<div>\n  <p>Not mapped to Entrez: 98<\/p>\n  <p>\n    Top unmapped genes:\n    <a id=\"geneDENotMappedTableShowBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#geneDENotMappedTable&quot;).show();$(&quot;#geneDENotMappedTableShowBtn&quot;).hide();$(&quot;#geneDENotMappedTableHideBtn&quot;).show()\">show<\/a>\n    <a id=\"geneDENotMappedTableHideBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#geneDENotMappedTable&quot;).hide();$(&quot;#geneDENotMappedTableShowBtn&quot;).show();$(&quot;#geneDENotMappedTableHideBtn&quot;).hide()\" style=\"display:none\">hide<\/a>\n    <script>$(\"#geneDENotMappedTable\").hide()<\/script>\n  <\/p>\n<\/div>",
       "deps": [
@@ -38,7 +38,7 @@
     },
     "geneDETable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> NM_008730 <\/td> <td> 2.89e-42 <\/td> <td> -12.39 <\/td> <td>  490 <\/td> <\/tr>\n  <tr> <td> NM_172621 <\/td> <td> 3.85e-30 <\/td> <td>  12.64 <\/td> <td> 1388 <\/td> <\/tr>\n  <tr> <td> NM_013653 <\/td> <td> 2.16e-29 <\/td> <td>   8.58 <\/td> <td> 3164 <\/td> <\/tr>\n  <tr> <td> NM_001004174 <\/td> <td> 1.34e-26 <\/td> <td>   8.07 <\/td> <td> 3670 <\/td> <\/tr>\n  <tr> <td> NM_011198 <\/td> <td> 1.80e-26 <\/td> <td>   7.98 <\/td> <td> 1857 <\/td> <\/tr>\n  <tr> <td> NM_021274 <\/td> <td> 2.17e-26 <\/td> <td>   8.02 <\/td> <td> 3065 <\/td> <\/tr>\n   <\/tbody> <\/table>",
     "genesBUMPlot": {
-      "src": "[image data sha1: adcaac0ae024d96def995aa01e3251bdbd4c2c98]",
+      "src": "[image data sha1: 549344892c4f6626825471ea57e55b7283606db4]",
       "width": 600,
       "height": 600,
       "alt": "Plot object",
@@ -72,7 +72,7 @@
         }
       }
     },
-    "initialized": "$(\"#initializing\").hide();2017217118251912",
+    "initialized": "$(\"#initializing\").hide();26201111126163",
     "metDENotMapped": {
       "html": "<div>\n  <p>Not mapped to KEGG: 1414<\/p>\n  <p>\n    Top unmapped metabolites:\n    <a id=\"metDENotMappedTableShowBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#metDENotMappedTable&quot;).show();$(&quot;#metDENotMappedTableShowBtn&quot;).hide();$(&quot;#metDENotMappedTableHideBtn&quot;).show()\">show<\/a>\n    <a id=\"metDENotMappedTableHideBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#metDENotMappedTable&quot;).hide();$(&quot;#metDENotMappedTableShowBtn&quot;).show();$(&quot;#metDENotMappedTableHideBtn&quot;).hide()\" style=\"display:none\">hide<\/a>\n    <script>$(\"#metDENotMappedTable\").hide()<\/script>\n  <\/p>\n<\/div>",
       "deps": [
@@ -88,7 +88,7 @@
     },
     "metDETable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> HMDB00634 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB00620 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB02092 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB00749 <\/td> <td> 8.83e-34 <\/td> <td> 3.12 <\/td> <td> 17.1 <\/td> <\/tr>\n  <tr> <td> HMDB10720 <\/td> <td> 5.93e-31 <\/td> <td> 2.51 <\/td> <td> 16.0 <\/td> <\/tr>\n  <tr> <td> HMDB03407 <\/td> <td> 5.93e-31 <\/td> <td> 2.51 <\/td> <td> 16.0 <\/td> <\/tr>\n   <\/tbody> <\/table>",
     "metsBUMPlot": {
-      "src": "[image data sha1: 986df8e7802c4693321c2e9beefce6d882eab920]",
+      "src": "[image data sha1: e547d8ba811fc67163c35a4596a54b05ff1dc938]",
       "width": 600,
       "height": 600,
       "alt": "Plot object",
@@ -1060,7 +1060,7 @@
     "moduleSummary": "<ul>\n<li> number of nodes :  11 <\/li>\n<li> number of edges :  11 <\/li>\n<\/ul>\n",
     "networkParameters": "network.available = true;\nnetwork.hasGenes = true;\nnetwork.hasMets = true;\n$(\"#find\").trigger(\"click\");$(\"#find\").removeAttr(\"disabled\").addClass(\"btn-default\");",
     "networkSummary": "<ul>\n<li> number of nodes :  4704 <\/li>\n<li> number of edges :  5461 <\/li>\n<\/ul>\n",
-    "showModulePanel": "mp = $('#network-panel'); mp[0].scrollIntoView();;1716164155421910",
+    "showModulePanel": "mp = $('#network-panel'); mp[0].scrollIntoView();;126181613211017",
     "solverString": "Solver: Virgo Solver (time limit = 30s)"
   },
   "export": {

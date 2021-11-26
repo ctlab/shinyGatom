@@ -22,7 +22,7 @@
     "solveToOptimality": false
   },
   "output": {
-    "enableMakeNetwork": "$(\"#runStep1\").removeAttr(\"disabled\").addClass(\"btn-default\");$(\"#runAll\").removeAttr(\"disabled\").addClass(\"btn-default\");;2213167201771119",
+    "enableMakeNetwork": "$(\"#runStep1\").removeAttr(\"disabled\").addClass(\"btn-default\");$(\"#runAll\").removeAttr(\"disabled\").addClass(\"btn-default\");;121451411176159",
     "geneDENotMapped": {
       "html": "<div>\n  <p>Not mapped to Entrez: 98<\/p>\n  <p>\n    Top unmapped genes:\n    <a id=\"geneDENotMappedTableShowBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#geneDENotMappedTable&quot;).show();$(&quot;#geneDENotMappedTableShowBtn&quot;).hide();$(&quot;#geneDENotMappedTableHideBtn&quot;).show()\">show<\/a>\n    <a id=\"geneDENotMappedTableHideBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#geneDENotMappedTable&quot;).hide();$(&quot;#geneDENotMappedTableShowBtn&quot;).show();$(&quot;#geneDENotMappedTableHideBtn&quot;).hide()\" style=\"display:none\">hide<\/a>\n    <script>$(\"#geneDENotMappedTable\").hide()<\/script>\n  <\/p>\n<\/div>",
       "deps": [
@@ -38,7 +38,7 @@
     },
     "geneDETable": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'> ID <\/th> <th style='text-align: left;'> pval <\/th> <th style='text-align: left;'> log2FC <\/th> <th style='text-align: left;'> baseMean <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> NM_008730 <\/td> <td> 2.89e-42 <\/td> <td> -12.39 <\/td> <td>  490 <\/td> <\/tr>\n  <tr> <td> NM_172621 <\/td> <td> 3.85e-30 <\/td> <td>  12.64 <\/td> <td> 1388 <\/td> <\/tr>\n  <tr> <td> NM_013653 <\/td> <td> 2.16e-29 <\/td> <td>   8.58 <\/td> <td> 3164 <\/td> <\/tr>\n  <tr> <td> NM_001004174 <\/td> <td> 1.34e-26 <\/td> <td>   8.07 <\/td> <td> 3670 <\/td> <\/tr>\n  <tr> <td> NM_011198 <\/td> <td> 1.80e-26 <\/td> <td>   7.98 <\/td> <td> 1857 <\/td> <\/tr>\n  <tr> <td> NM_021274 <\/td> <td> 2.17e-26 <\/td> <td>   8.02 <\/td> <td> 3065 <\/td> <\/tr>\n   <\/tbody> <\/table>",
     "genesBUMPlot": {
-      "src": "[image data sha1: 2fb8f03a7edee2ac6fce4862f5c120e9b8bc6a34]",
+      "src": "[image data sha1: 72941d44cdd0045b4971838489b04feb390b9e95]",
       "width": 600,
       "height": 600,
       "alt": "Plot object",
@@ -72,7 +72,7 @@
         }
       }
     },
-    "initialized": "$(\"#initializing\").hide();18163911912101714",
+    "initialized": "$(\"#initializing\").hide();1814121118181816121",
     "metDENotMapped": {
       "html": "<div>\n  <p>Not mapped to ChEBI: 1810<\/p>\n  <p>\n    Top unmapped metabolites:\n    <a id=\"metDENotMappedTableShowBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#metDENotMappedTable&quot;).show();$(&quot;#metDENotMappedTableShowBtn&quot;).hide();$(&quot;#metDENotMappedTableHideBtn&quot;).show()\">show<\/a>\n    <a id=\"metDENotMappedTableHideBtn\" href=\"javascript:void()\" onclick=\"$(&quot;#metDENotMappedTable&quot;).hide();$(&quot;#metDENotMappedTableShowBtn&quot;).show();$(&quot;#metDENotMappedTableHideBtn&quot;).hide()\" style=\"display:none\">hide<\/a>\n    <script>$(\"#metDENotMappedTable\").hide()<\/script>\n  <\/p>\n<\/div>",
       "deps": [
@@ -136,7 +136,7 @@
     "moduleSummary": "There is no module yet",
     "networkParameters": "network.available = true;\nnetwork.hasGenes = true;\nnetwork.hasMets = true;\n$(\"#find\").removeAttr(\"disabled\").addClass(\"btn-default\");",
     "networkSummary": "<ul>\n<li> number of nodes :  980 <\/li>\n<li> number of edges :  1372 <\/li>\n<\/ul>\n",
-    "showModulePanel": "mp = $('#network-panel'); mp[0].scrollIntoView();;151719617203119",
+    "showModulePanel": "mp = $('#network-panel'); mp[0].scrollIntoView();;61415812197733",
     "solverString": "Solver: Virgo Solver (time limit = 30s)"
   },
   "export": {

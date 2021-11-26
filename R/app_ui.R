@@ -89,22 +89,28 @@ app_ui <- function(request) {
                     uiOutput("geneDESummary"),
                     uiOutput("geneDETable"),
                     uiOutput("geneDENotMapped"),
-                    uiOutput("geneDENotMappedTable")),
+                    uiOutput("geneDENotMappedTable")
+                    ),
                 div(class="DEBlock",
                     h3("Differential expression for metabolites"),
                     uiOutput("metDESummary"),
                     uiOutput("metDETable"),
                     uiOutput("metDENotMapped"),
-                    uiOutput("metDENotMappedTable")),
+                    uiOutput("metDENotMappedTable")
+                    ),
                 div(id="network-panel", class="bottom-buffer",
                     h3("Network summary"),
                     uiOutput("networkSummary"),
                     conditionalPanel("network.available",
                                      downloadButton("downloadNetwork", "Download XGMML"),
-                                     h4("BUM distribution for genes"),
-                                     plotOutput("genesBUMPlot", width = "600px", height = "600px"),
-                                     h4("BUM distribution for metabolites"),
-                                     plotOutput("metsBUMPlot", width = "600px", height = "600px")
+                                     conditionalPanel("!input.nullkgene", 
+                                                      h4("BUM distribution for genes"),
+                                                      plotOutput("genesBUMPlot", width = "600px", height = "600px")
+                                     ),
+                                     conditionalPanel("!input.nullkmet", 
+                                                      h4("BUM distribution for metabolites"),
+                                                      plotOutput("metsBUMPlot", width = "600px", height = "600px")
+                                     )
                     )
                 ),
             )

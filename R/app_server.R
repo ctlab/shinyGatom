@@ -564,6 +564,9 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             k.met <- isolate(kMet())
+            if (is.null(k.met)) {
+                return(NULL)
+            }
             res <- fitMetsToBUM(g=g, k.met=k.met)
             res
         })
@@ -575,6 +578,9 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             k.gene <- isolate(kGene())
+            if (is.null(k.gene)) {
+                return(NULL)
+            }
             res <- fitGenesToBUM(g=g, k.gene=k.gene)
             res
         })
@@ -588,7 +594,6 @@ app_server <- function(config_file) {
             gen.bum <- isolate(genBUM())
             plot(gen.bum)
         })
-        
         
         
         output$metsBUMPlot <- renderPlot({
@@ -724,8 +729,8 @@ app_server <- function(config_file) {
             met.bum <- isolate(metBUM())
             gen.bum <- isolate(genBUM())
             
-            res <- scoreGraph2(g=es, k.gene=k.gene, k.met=k.met,
-                               metabolite.bum=met.bum, gene.bum=gen.bum
+            res <- scoreGraphShiny(g=es, k.gene=k.gene, k.met=k.met,
+                                   metabolite.bum=met.bum, gene.bum=gen.bum
             )
             
             
@@ -814,7 +819,7 @@ app_server <- function(config_file) {
             )
         })
         
-        output$module <- renderShinyCyJS(prepareForshinyCyJS(moduleInput()))
+        output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput()))
 
         output$downloadNetwork <- downloadHandler(
             filename = reactive({ paste0("network.", tolower(esInput()$network$organism), ".xgmml") }),
