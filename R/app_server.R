@@ -458,7 +458,7 @@ app_server <- function(config_file) {
         })
         
         
-        esInput <- reactive({
+        gInput <- reactive({
             input$preprocess
             loginfo("Preprocessing")
             network <- isolate(getNetwork())
@@ -498,7 +498,7 @@ app_server <- function(config_file) {
                 org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
                                                     conf$path.to.org.Mm.eg.gatom.anno)
                 
-                es <- makeMetabolicGraph(network=network,
+                g <- makeMetabolicGraph(network=network,
                                          topology=topology,
                                          org.gatom.anno=org.Mm.eg.gatom.anno,
                                          gene.de=geneDEInput(),
@@ -506,13 +506,13 @@ app_server <- function(config_file) {
                                          met.de=metDEInput(),
                                          met.to.filter=fread(system.file("mets2mask.lst", package="gatom"))$ID)
                 
-                attr(es, "tag") <- tag
-                es
+                attr(g, "tag") <- tag
+                g
             }, finally=longProcessStop())
         })
         
         output$networkSummary <- reactive({
-            g <- esInput()
+            g <- gInput()
             if (is.null(g)) {
                 return("There is no built network")
             }
@@ -524,42 +524,32 @@ app_server <- function(config_file) {
         })
         
         
+        
         kMet <- reactive({
-            if (!input$nullkmet) {
-                input$kmet
-            } else {
-                NULL
+            met.de <- isolate(metDEInput())
+            
+            if (is.null(met.de)) {
+                return(NULL)
+            } else if (input$nullkmet) {
+                return(NULL)
             }
+            input$kmet
         })
         
         kGene <- reactive({
-            if (!input$nullkgene) {
-                input$kgene
-            } else {
-                NULL
+            gene.de <- isolate(geneDEInput())
+            
+            if (is.null(gene.de)) {
+                return(NULL)
+            } else if (input$nullkgene) {
+                return(NULL)
             }
+            input$kgene
         })
-        
-        gene.de <- isolate(geneDEInput())
-        met.de <- isolate(metDEInput())
-        
-        if (!is.null(gene.de) && !is.null(met.de)) {
-            k.gene <- isolate(kGene())
-            k.met <- isolate(kMet())
-        } else if (!is.null(gene.de)) {
-            k.gene <- isolate(kGene())
-            k.met <- NULL
-        } else if (!is.null(met.de)) {
-            k.gene <- NULL
-            k.met <- isolate(kMet())
-        } else {
-            k.gene <- NULL
-            k.met <- NULL
-        }
         
         
         metBUM <- reactive({
-            g <- esInput()
+            g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
@@ -573,7 +563,7 @@ app_server <- function(config_file) {
         
         
         genBUM <- reactive({
-            g <- esInput()
+            g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
@@ -587,32 +577,40 @@ app_server <- function(config_file) {
         
         
         output$genesBUMPlot <- renderPlot({
-            g <- esInput()
+            g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
             gen.bum <- isolate(genBUM())
+            if (is.null(gen.bum)) {
+                return(NULL)
+            }
+            
             plot(gen.bum)
         })
         
         
         output$metsBUMPlot <- renderPlot({
-            g <- esInput()
+            g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
             met.bum <- isolate(metBUM())
+            if (is.null(met.bum)) {
+                return(NULL)
+            }
+            
             plot(met.bum)
         })
         
         
         output$networkParameters <- reactive({
-            es <- NULL
+            g <- NULL
             tryCatch({
-                es <- esInput()
+                g <- gInput()
             }, error=function(e) {})
             
-            if (is.null(es)) {
+            if (is.null(g)) {
                 return("")
             }
             
@@ -671,14 +669,14 @@ app_server <- function(config_file) {
         })
         
         output$showModulePanel <- renderJs({
-            if (!is.null(esInput())) { return("mp = $('#network-panel'); mp[0].scrollIntoView();")
+            if (!is.null(gInput())) { return("mp = $('#network-panel'); mp[0].scrollIntoView();")
             }
             return("")
         })
         
         getSolver <- reactive({
-            es <- esInput()
-            if (is.null(es)) {
+            g <- gInput()
+            if (is.null(g)) {
                 return(NULL)
             }
             
@@ -690,7 +688,7 @@ app_server <- function(config_file) {
         })
         
         output$solverString <- reactive({
-            es <- esInput()
+            g <- gInput()
             solver <- getSolver()
             if (!is.null(solver)) {
                 sprintf("Solver: %s", attr(solver, "description"))
@@ -699,43 +697,35 @@ app_server <- function(config_file) {
             }
         })
         
-        esScoredInput <- reactive({
+        gScoredInput <- reactive({
             input$find
-            es <- isolate(esInput())
+            g <- isolate(gInput())
             
-            if (is.null(es)) {
+            if (is.null(g)) {
                 return(NULL)
             }
             
             longProcessStart()
-            loginfo(paste0(attr(es, "tag"),".mp"
+            loginfo(paste0(attr(g, "tag"),".mp"
             ))
             
             
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
             
-            k.gene <- NULL
-            k.met <- NULL
-            
-            if (!is.null(gene.de)) {
-                k.gene <- isolate(kGene())
-            } 
-            if (!is.null(met.de)) {
-                k.met <- isolate(kMet())
-            }
-            
+            k.gene <- isolate(kGene())
+            k.met <- isolate(kMet())
             
             met.bum <- isolate(metBUM())
             gen.bum <- isolate(genBUM())
             
-            res <- scoreGraphShiny(g=es, k.gene=k.gene, k.met=k.met,
+            res <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
                                    metabolite.bum=met.bum, gene.bum=gen.bum
             )
             
             
-            res$description.string <- paste0(attr(es, "tag")#,
-                                             #if (es$reactions.as.edges) ".re" else ".rn",
+            res$description.string <- paste0(attr(g, "tag")#,
+                                             #if (g$reactions.as.edges) ".re" else ".rn",
                                              #if (TRUE) ".re" else ".rn",
                                              #".mf=", format(log10(met.fdr), digist=2),
                                              #".rf=", format(log10(gene.fdr), digist=2),
@@ -748,9 +738,9 @@ app_server <- function(config_file) {
         rawModuleInput <- reactive({
             input$find
             
-            esScored <- isolate(esScoredInput())
+            gScored <- isolate(gScoredInput())
             
-            if (is.null(esScored)) {
+            if (is.null(gScored)) {
                 return(NULL)
             }
             
@@ -758,7 +748,7 @@ app_server <- function(config_file) {
             tryCatch({
                 solver <- isolate(getSolver())
                 
-                inst <- esScored
+                inst <- gScored
                 
                 res <- solve_mwcsp(solver, inst)
                 res <- res$graph
@@ -766,7 +756,7 @@ app_server <- function(config_file) {
                 if (is.null(res) || length(V(res)) == 0) {
                     stop("No module found")
                 }
-                res$description.string <- esScored$description.string
+                res$description.string <- gScored$description.string
                 res
             }, finally=longProcessStop())
         })
@@ -781,10 +771,10 @@ app_server <- function(config_file) {
             module <- remove.vertex.attribute(module, "score")
             module <- remove.edge.attribute(module, "score")
             
-            es <- isolate(esInput())
+            g <- isolate(gInput())
             
             if (input$addHighlyExpressedEdges) {
-                module <- addHighlyExpressedEdges(module, es)
+                module <- addHighlyExpressedEdges(module, g)
             }
             
             if (input$metaboliteActions == "connectAtomsInsideMetabolite") {
@@ -822,9 +812,9 @@ app_server <- function(config_file) {
         output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput()))
 
         output$downloadNetwork <- downloadHandler(
-            filename = reactive({ paste0("network.", tolower(esInput()$network$organism), ".xgmml") }),
+            filename = reactive({ paste0("network.", tolower(gInput()$network$organism), ".xgmml") }),
             content = function(file) {
-                saveModuleToXgmml(esInput()$subnet, file=file, name=tolower(esInput()$network$organism))
+                saveModuleToXgmml(gInput()$subnet, file=file, name=tolower(gInput()$network$organism))
             })
         
         output$downloadModule <- downloadHandler(
