@@ -59,7 +59,7 @@ After files are uploaded, a file summary is displayed. In the bottom of the summ
 with IDs that were not mapped to the IDs used in network (e.g. Entrez for mouse) are shown. Verify that the files
 were parsed correctly.
 
-![Summary of the example data](img/data_summary.png)
+![Summary of the example data](www/img/data_summary.png)
 
 If present, DE for genes is converted to DE for reactions. This is done by 
 considering for a reaction all the genes that code any
@@ -72,7 +72,7 @@ uploading.
 Reactions in the network can be interpreted as either edges or nodes. Select
 one of the interpretations. See the image below.
 
-![Ways to map a reaction network into graph](img/mapping.png)
+![Ways to map a reaction network into graph](www/img/mapping.png)
 
 **Reactions as edges.** If reactions are interpreted as edges, if a pair of
 metabolites has multiple reaction connections between them, only the reaction
@@ -125,7 +125,7 @@ solvers that can be run for a predefined amount of time. These are Heinz 2
 Click *Step 2: Find module* button to find a module in the network. The module will
 be shown on the right panel.
 
-![Example of a module](img/module.png)
+![Example of a module](www/img/module.png)
 
 #### Graph legend
 
@@ -187,5 +187,5 @@ Then load GAM Cytoscape VizMap
 using menu *File>Import>Style...* and then selecting it in the *Style* tab on the right, instead of *default*.
 The result should look like this:
 
-![Module loaded in Cytoscape](img/cytoscape.png)
+![Module loaded in Cytoscape](www/img/cytoscape.png)
 
