@@ -1,2 +1,2 @@
 #!/bin/sh
-exec R -e "shiny::runApp('.', launch.browser=F, port=8081)"
+exec R -e "options(shiny.autoload.r=FALSE); shiny::runApp('.', launch.browser=F, port=8081)"

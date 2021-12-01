@@ -101,16 +101,21 @@ app_ui <- function(request) {
                 div(id="network-panel", class="bottom-buffer",
                     h3("Network summary"),
                     uiOutput("networkSummary"),
-                    conditionalPanel("network.available",
-                                     downloadButton("downloadNetwork", "Download XGMML"),
-                                     conditionalPanel("!input.nullkgene", 
-                                                      h4("BUM distribution for genes"),
-                                                      plotOutput("genesBUMPlot", width = "600px", height = "600px")
-                                     ),
-                                     conditionalPanel("!input.nullkmet", 
-                                                      h4("BUM distribution for metabolites"),
-                                                      plotOutput("metsBUMPlot", width = "600px", height = "600px")
-                                     )
+                    conditionalPanel(
+                        "network.available",
+                        downloadButton("downloadNetwork", "Download XGMML"),
+                        div(id="bum-plots",
+                            conditionalPanel("!input.nullkgene", 
+                                             class="col-sm-6",
+                                             h4("BUM distribution for genes"),
+                                             plotOutput("genesBUMPlot", width = "400px", height = "400px")
+                            ),
+                            conditionalPanel("!input.nullkmet", 
+                                             class="col-sm-6",
+                                             h4("BUM distribution for metabolites"),
+                                             plotOutput("metsBUMPlot", width = "400px", height = "400px")
+                            )
+                        )
                     )
                 ),
             )
