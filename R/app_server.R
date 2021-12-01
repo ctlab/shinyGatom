@@ -318,26 +318,28 @@ app_server <- function(config_file) {
         
         
         metMapsCreate <- reactive({
+            ids.type <- metIdsType()
+            
             if (input$network_type == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = conf$path.to.met.kegg.db)
                 met.db <- met.kegg.db
                 
-                hmdb2kegg <- data.table(na.omit(met.db$mapFrom$HMDB))
-                colnames(hmdb2kegg) <- c("HMDB", "KEGG")
+                data2kegg <- data.table(na.omit(met.db$mapFrom[[ids.type]]))
+                colnames(data2kegg) <- c(ids.type, "KEGG")
                 kegg2name <- met.db$metabolites[ , c("metabolite", "metabolite_name")]
                 colnames(kegg2name) <- c("KEGG", "name")
-                res <- merge(hmdb2kegg, kegg2name, all.x=T, by="KEGG")
+                res <- merge(data2kegg, kegg2name, all.x=T, by="KEGG")
             } else {
                 met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
                                            path = conf$path.to.met.rhea.db)
                 met.db <- met.rhea.db
                 
-                hmdb2chebi <- data.table(na.omit(met.db$mapFrom$HMDB))
-                colnames(hmdb2chebi) <- c("HMDB", "ChEBI")
+                data2chebi <- data.table(na.omit(met.db$mapFrom[[ids.type]]))
+                colnames(data2chebi) <- c(ids.type, "ChEBI")
                 chebi2name <- met.db$metabolites[ , c("metabolite", "metabolite_name")]
                 colnames(chebi2name) <- c("ChEBI", "name")
-                res <- merge(hmdb2chebi, chebi2name, all.x=T, by="ChEBI")
+                res <- merge(data2chebi, chebi2name, all.x=T, by="ChEBI")
             }
             res <- na.omit(res)
             res <- data.table(res)

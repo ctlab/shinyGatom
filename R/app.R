@@ -17,21 +17,5 @@ ShinyGATOM <- function(config_file=system.file('config.yml', package = 'ShinyGAT
     addResourcePath('/www',
                     system.file('www', package = 'ShinyGATOM'))
 
-    #source("./functions.R")
-    #source("./config.R")
-
-    #data("met.id.map")
-    #data("kegg.human.network")
-    #data("kegg.mouse.network")
-    #data("kegg.arabidopsis.network")
-    #data("kegg.yeast.network")
-
-    #networks <- list(
-    #    "mmu"="kegg.mouse.network",
-    #    "hsa"="kegg.human.network",
-    #    "ath"="kegg.arabidopsis.network",
-    #    "sce"="kegg.yeast.network"
-    #    )
-
     shinyApp(app_ui, app_server(config_file))
 }
