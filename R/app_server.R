@@ -7,17 +7,15 @@ app_server <- function(config_file) {
     
     function(input, output, session) {
         
-        network_type <- list(
+        networks <- list(
             "kegg"="network.kegg",
             "rhea"="network.rhea"
         )
         
-        
         v.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=240)
         attr(v.solver, "description") <- "Virgo Solver (time limit = 4m)"
         
-        v2.solver <- virgo_solver(cplex_dir=NULL,  penalty=0.01, timelimit=30)
-        #v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
+        v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
         attr(v2.solver, "description") <- "Virgo Solver (time limit = 30s)"
         
         
@@ -74,7 +72,7 @@ app_server <- function(config_file) {
                 path.to.network <- conf$path.to.rhea.network
             }
             
-            res <- lazyReadRDS(network_type[[input$network_type]],
+            res <- lazyReadRDS(networks[[input$network_type]],
                                path = path.to.network)
             res
         })
@@ -671,7 +669,8 @@ app_server <- function(config_file) {
         })
         
         output$showModulePanel <- renderJs({
-            if (!is.null(gInput())) { return("mp = $('#network-panel'); mp[0].scrollIntoView();")
+            if (!is.null(gInput())) { 
+                return("mp = $('#network-panel'); mp[0].scrollIntoView();")
             }
             return("")
         })
@@ -881,6 +880,67 @@ app_server <- function(config_file) {
                     from=system.file("GAM_VizMap.xml", package="GAM"),
                     to=file)
             })
+        
+        output$pathwaysParameters <- reactive({
+            input$findPathways
+            
+            makeJsAssignments(
+                pathways.show = TRUE
+            )
+        })
+        
+        output$showPathwaysPanel <- renderJs({
+            if (input$findPathways) {
+                return("mp = $('#pathway-panel'); mp[0].scrollIntoView();")
+            }
+            return("")
+        })
+        
+        output$pathwaysTable <- renderTable({
+            m <- moduleInput()
+            if (is.null(m)) {
+                return(NULL)
+            }
+            
+            g <- gInput()
+            if (is.null(g)) {
+                return(NULL)
+            }
+            
+            org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
+                                                conf$path.to.org.Mm.eg.gatom.anno)
+            
+            foraRes <- fgsea::fora(pathways=org.Mm.eg.gatom.anno$pathways,
+                                   genes=E(m)$gene,
+                                   universe=unique(E(g)$gene),
+                                   minSize=5)
+            res <- foraRes[padj < 0.05]
+            
+            if (input$collapsePathways) {
+                if (length(res$pathway) > 5) {
+                    mainPathways <- fgsea::collapsePathwaysORA(
+                        res,
+                        pathways=org.Mm.eg.gatom.anno$pathways,
+                        genes=E(m)$gene,
+                        universe=unique(E(g)$gene))
+                    output$wentwrong <- NULL
+                    
+                    if (sum(pathway %in% mainPathways$mainPathways) > 0) {
+                        res <- foraRes[pathway %in% mainPathways$mainPathways]
+                        output$wentwrong <- NULL
+                        
+                    } else {
+                        output$wentwrong <- renderText("Pathway collapsion went wrong")
+                        }
+                } else {
+                    output$wentwrong <- renderText("Pathway collapsion went wrong")
+                }
+            } else {
+                output$wentwrong <- NULL
+            }
+            
+            format(as.data.frame(res), digits=3)
+        })
         
         output$GAMVersion <- renderUI({
             p(paste("GAM version:", sessionInfo()$otherPkgs$GAM$Revision))

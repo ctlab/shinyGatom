@@ -22,5 +22,6 @@ Imports:
     shiny,
     shinyCyJS,
     config,
-    gatom
+    gatom,
+    fgsea
 

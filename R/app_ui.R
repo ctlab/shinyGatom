@@ -171,12 +171,41 @@ app_ui <- function(request) {
                     div(img(src="www/img/log2FCscale.svg"))
                 ),
                 p(),
-                downloadButton("downloadVizMap", "Cytoscape VizMap")
+                downloadButton("downloadVizMap", "Cytoscape VizMap"),
+                p()
             ),
             myMainPanel(
                 h3("Module"),
+                conditionalPanel("module.available",
+                                 myActionButton("findPathways", "Show main pathways")
+                ),
                 ShinyCyJSOutput(outputId = 'module', width = "100%", height = "100vh")
             )
+        ),
+        
+        conditionalPanel("pathways.show",
+                         div(id="pathway-panel", class="row top-buffer",
+                             div(class="sidebar col-sm-3",
+                                 h3(""),
+                                 wellPanel(
+                                     checkboxInput("collapsePathways",
+                                                   label="Collapse pathways",
+                                                   value=FALSE)
+                                 )
+                             ),
+                             myMainPanel(
+                                 h3("Pathway annotation"),
+                                 tags$head(tags$style("#wentwrong{color: red;
+                                                                  font-size: 15px;
+                                                                  font-style: italic;
+                                                                  }"
+                                 )
+                                 ),
+                                 conditionalPanel("collapsePathways",
+                                                  textOutput("wentwrong")),
+                                 uiOutput("pathwaysTable")
+                             )
+                         )
         )
     )
     
