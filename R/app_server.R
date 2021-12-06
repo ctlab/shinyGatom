@@ -12,6 +12,11 @@ app_server <- function(config_file) {
             "rhea" = "network.rhea"
         )
         
+        networkPaths <- list(
+            "kegg" = conf$path.to.kegg.network,
+            "rhea" = conf$path.to.rhea.network
+        )
+        
         annotations <- list(
             "mmu" = "org.Mm.eg.gatom.anno",
             "hsa" = "org.Hs.eg.gatom.anno"
@@ -75,14 +80,8 @@ app_server <- function(config_file) {
         })
         
         getNetwork <- reactive({
-            if (input$network == "kegg"){
-                path.to.network <- conf$path.to.kegg.network
-            } else {
-                path.to.network <- conf$path.to.rhea.network
-            }
-            
             res <- lazyReadRDS(networks[[input$network]],
-                               path = path.to.network)
+                               path = networkPaths[[input$network]])
             res
         })
         

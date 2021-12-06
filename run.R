@@ -28,5 +28,5 @@ ShinyGATOM()
 
 ## Testing
 # load_all()
-devtools::test()
-shinytest::recordTest()
+# devtools::test()
+# shinytest::recordTest()

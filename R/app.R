@@ -11,6 +11,7 @@
 #' @import RCurl
 #' @import parallel
 #' @import pryr
+#' @import fgsea
 #' @import markdown
 #' @export
 ShinyGATOM <- function(config_file=system.file('config.yml', package = 'ShinyGATOM')) {
