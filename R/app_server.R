@@ -7,17 +7,30 @@ app_server <- function(config_file) {
     
     function(input, output, session) {
         
-        network_type <- list(
-            "kegg"="network.kegg",
-            "rhea"="network.rhea"
+        networks <- list(
+            "kegg" = "network.kegg",
+            "rhea" = "network.rhea"
         )
         
+        annotations <- list(
+            "mmu" = "org.Mm.eg.gatom.anno",
+            "hsa" = "org.Hs.eg.gatom.anno"
+            # "ath" = "ath",
+            # "sce" = "sce"
+        )
+        
+        annotationPaths <- list(
+            "mmu" = conf$path.to.org.Mm.eg.gatom.anno,
+            "hsa" = conf$path.to.org.Hs.eg.gatom.anno
+            # "ath"="ath",
+            # "sce"="sce"
+        )
         
         v.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=240)
         attr(v.solver, "description") <- "Virgo Solver (time limit = 4m)"
         
-        v2.solver <- virgo_solver(cplex_dir=NULL,  penalty=0.01, timelimit=30)
-        #v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
+        # v2.solver <- virgo_solver(cplex_dir=NULL,  penalty=0.01, timelimit=30)
+        v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
         attr(v2.solver, "description") <- "Virgo Solver (time limit = 30s)"
         
         
@@ -62,20 +75,25 @@ app_server <- function(config_file) {
         })
         
         getNetwork <- reactive({
-            #net <- if (loadExample()) {
-            #    "kegg.mouse.network"
-            #} else {
-            #    networks[[input$network]]
-            #}
-            
-            if (input$network_type == "kegg"){
+            if (input$network == "kegg"){
                 path.to.network <- conf$path.to.kegg.network
             } else {
                 path.to.network <- conf$path.to.rhea.network
             }
             
-            res <- lazyReadRDS(network_type[[input$network_type]],
+            res <- lazyReadRDS(networks[[input$network]],
                                path = path.to.network)
+            res
+        })
+        
+        getAnnotation <- reactive({
+            if (loadExample()){
+                res <- lazyReadRDS(annotations[["mmu"]],
+                                   path=annotationPaths[["mmu"]])
+            } else {
+                res <- lazyReadRDS(annotations[[input$organism]],
+                                   path=annotationPaths[[input$organism]])
+            }
             res
         })
         
@@ -136,10 +154,9 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
+            org.gatom.anno <- getAnnotation()
             
-            org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-                                                conf$path.to.org.Mm.eg.gatom.anno)
-            res <- getGeneDEMeta(data, org.gatom.anno=org.Mm.eg.gatom.anno)$idType
+            res <- getGeneDEMeta(data, org.gatom.anno=org.gatom.anno)$idType
             
             if (length(res) != 1) {
                 stop("Can't determine type of IDs for genes")
@@ -174,17 +191,15 @@ app_server <- function(config_file) {
         })
         
         geneMapsCreate <- reactive({
-            org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-                                                path = conf$path.to.org.Mm.eg.gatom.anno)
-            
-            entrez2refseq <- data.table(na.omit(org.Mm.eg.gatom.anno$mapFrom$RefSeq))
+            org.gatom.anno <- getAnnotation()
+            entrez2refseq <- data.table(na.omit(org.gatom.anno$mapFrom$RefSeq))
             colnames(entrez2refseq) <- c("Entrez", "RefSeq")
-            entrez2ensembl <- data.table(na.omit(org.Mm.eg.gatom.anno$mapFrom$Ensembl))
+            entrez2ensembl <- data.table(na.omit(org.gatom.anno$mapFrom$Ensembl))
             colnames(entrez2ensembl) <- c("Entrez", "Ensembl")
-            entrez2symbol <- data.table(na.omit(org.Mm.eg.gatom.anno$mapFrom$Symbol))
+            entrez2symbol <- data.table(na.omit(org.gatom.anno$mapFrom$Symbol))
             colnames(entrez2symbol) <- c("Entrez", "Symbol")
             
-            entrez2name <- org.Mm.eg.gatom.anno$genes
+            entrez2name <- org.gatom.anno$genes
             colnames(entrez2name) <- c("Entrez", "gene_symbol")
             
             res <- merge(entrez2name, entrez2refseq, all.x=T, by="Entrez")
@@ -197,15 +212,14 @@ app_server <- function(config_file) {
         })
         
         notMappedGenes <- reactive({
-            org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno", 
-                                                path = conf$path.to.org.Mm.eg.gatom.anno)
+            org.gatom.anno <- getAnnotation()
             geneIT <- geneIdsType()
             
             if (is.null(geneIT)) {
                 return(NULL)
             }
             
-            if (geneIT == org.Mm.eg.gatom.anno$baseId) {
+            if (geneIT == org.gatom.anno$baseId) {
                 return(NULL)
             }
             gene.id.map <- geneMapsCreate()
@@ -220,9 +234,12 @@ app_server <- function(config_file) {
             }
             notMapped <- notMappedGenes()
             network <- getNetwork()
+            org.gatom.anno <- getAnnotation()
             
             div(
-                p(sprintf("Not mapped to %s: %s", org.Mm.eg.gatom.anno$baseId, length(notMapped))),
+                p(sprintf("Not mapped to %s: %s", 
+                          org.gatom.anno$baseId, 
+                          length(notMapped))),
                 if (length(notMapped) > 0) {
                     p("Top unmapped genes:",
                       a("show",
@@ -298,7 +315,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            if (input$network_type == "kegg"){
+            if (input$network == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = conf$path.to.met.kegg.db)
                 met.db <- met.kegg.db
@@ -320,7 +337,7 @@ app_server <- function(config_file) {
         metMapsCreate <- reactive({
             ids.type <- metIdsType()
             
-            if (input$network_type == "kegg"){
+            if (input$network == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = conf$path.to.met.kegg.db)
                 met.db <- met.kegg.db
@@ -373,7 +390,7 @@ app_server <- function(config_file) {
         
         notMappedMets <- reactive({
             
-            if (input$network_type == "kegg"){
+            if (input$network == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = conf$path.to.met.kegg.db)
                 met.db <- met.kegg.db
@@ -406,7 +423,7 @@ app_server <- function(config_file) {
             notMapped <- notMappedMets()
             network <- getNetwork()
             
-            if (input$network_type == "kegg"){
+            if (input$network == "kegg"){
                 met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                            path = conf$path.to.met.kegg.db)
                 met.db <- met.kegg.db
@@ -486,23 +503,22 @@ app_server <- function(config_file) {
                     met.de <- met.de[which(met.de$pval < 1), ]
                 }
                 
-                if (input$network_type == "kegg"){
+                if (input$network == "kegg"){
                     met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                                path = conf$path.to.met.kegg.db)
                     met.db <- met.kegg.db
-                } else if (input$network_type == "rhea") {
+                } else if (input$network == "rhea") {
                     met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
                                                path = conf$path.to.met.rhea.db)
                     met.db <- met.rhea.db
                 }
                 
                 topology = isolate(input$nodesAs)
-                org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-                                                    conf$path.to.org.Mm.eg.gatom.anno)
+                org.gatom.anno <- getAnnotation()
                 
                 g <- makeMetabolicGraph(network=network,
                                          topology=topology,
-                                         org.gatom.anno=org.Mm.eg.gatom.anno,
+                                         org.gatom.anno=org.gatom.anno,
                                          gene.de=geneDEInput(),
                                          met.db=met.db,
                                          met.de=metDEInput(),

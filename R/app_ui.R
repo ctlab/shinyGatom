@@ -25,13 +25,14 @@ app_ui <- function(request) {
         ),
         fixedRow(
             mySidebarPanel(
-                actionButton("resetInput", label="Reset all",
-                             onclick=paste(
-                                 'resetFileInput("geneDE"); resetFileInput("metDE")',
-                                 '$("#loadExampleGeneDE").attr("checked", false).trigger("change")',
-                                 '$("#loadExampleMetDE").attr("checked", false).trigger("change")',
-                                 '$("#preprocess").click(); $("#find").click()',
-                                 sep=";")
+                actionButton(
+                    "resetInput", label="Reset all",
+                    onclick=paste(
+                        'resetFileInput("geneDE"); resetFileInput("metDE")',
+                        '$("#loadExampleGeneDE").attr("checked", false).trigger("change")',
+                        '$("#loadExampleMetDE").attr("checked", false).trigger("change")',
+                        '$("#preprocess").click(); $("#find").click()',
+                        sep=";")
                 ),
                 checkboxInput(
                     "loadExampleGeneDE",
@@ -41,47 +42,54 @@ app_ui <- function(request) {
                     "loadExampleMetDE",
                     label="Example DE for metabolites",
                     value=FALSE),
-                conditionalPanel("input.loadExampleGeneDE || input.loadExampleMetDE",
-                                 p("Organism: Mouse")
+                conditionalPanel(
+                    "input.loadExampleGeneDE || input.loadExampleMetDE",
+                    p("Organism: Mouse")
                 ),
-                selectInput(
-                    "network_type",
-                    label="Select type of network",
-                    choices=c("KEGG network"="kegg",
-                              "Rhea network"="rhea"),
-                    selected="kegg"
+                selectInput("network",
+                            label="Select type of network",
+                            choices=c("KEGG network"="kegg",
+                                      "Rhea network"="rhea"),
+                            selected="kegg"
                 ),
-                conditionalPanel("!input.loadExampleGeneDE && !input.loadExampleMetDE",
-                                 selectInput(
-                                     "network",
-                                     label="Select an organism",
-                                     choices=c("Mouse"="mmu",
-                                               "Human"="hsa",
-                                               "Arabidopsis"="ath",
-                                               "Yeast"="sce"),
-                                     selected="mmu"
-                                 ),
-                                 fileInput("geneDE", "File with DE for genes"),
-                                 fileInput("metDE", "File with DE for metabolites")
+                conditionalPanel(
+                    "!input.loadExampleGeneDE && !input.loadExampleMetDE",
+                    selectInput("organism",
+                                label="Select an organism",
+                                choices=c("Mouse"="mmu",
+                                          "Human"="hsa",
+                                          "Arabidopsis"="ath",
+                                          "Yeast"="sce"),
+                                selected="mmu"
+                    ),
+                    fileInput("geneDE", "File with DE for genes"),
+                    fileInput("metDE", "File with DE for metabolites")
                 ),
                 selectInput("nodesAs",
                             label="Interpret nodes as",
-                            c("metabolites"="metabolites", "atoms"="atoms"),
+                            choices=c("metabolites"="metabolites", 
+                                      "atoms"="atoms"),
                             selected="atoms"),
-                conditionalPanel("false",
-                                 checkboxInput(
-                                     "autoFindModule",
-                                     label="Set FDRs & run step 2 automatically",
-                                     value=TRUE),
-                                 actionButton("preprocess", label="Step 1: Make network")
+                conditionalPanel(
+                    "false",
+                    checkboxInput("autoFindModule",
+                                  label="Set FDRs & run step 2 automatically",
+                                  value=TRUE),
+                    actionButton("preprocess", 
+                                 label="Step 1: Make network")
                 ),
-                myActionButton("runAll",   label="Make network and run step 2",
-                               onclick='$("#autoFindModule")[0].checked=true; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
-                               disabled=""),
+                myActionButton(
+                    "runAll",
+                    label="Make network and run step 2",
+                    onclick='$("#autoFindModule")[0].checked=true; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
+                    disabled=""),
                 div("or", style="text-align: center"),
-                myActionButton("runStep1", label="Step 1: Make network",
-                               onclick='$("#autoFindModule")[0].checked=false; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
-                               disabled="")
+                myActionButton(
+                    "runStep1", 
+                    label="Step 1: Make network",
+                    onclick='$("#autoFindModule")[0].checked=false; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
+                    disabled=""
+                    )
             ),
             myMainPanel(
                 div(class="DEBlock",
