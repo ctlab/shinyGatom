@@ -34,8 +34,8 @@ app_server <- function(config_file) {
         v.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=240)
         attr(v.solver, "description") <- "Virgo Solver (time limit = 4m)"
         
-        # v2.solver <- virgo_solver(cplex_dir=NULL,  penalty=0.01, timelimit=30)
-        v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
+        v2.solver <- virgo_solver(cplex_dir=NULL, timelimit=30)
+        # v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
         attr(v2.solver, "description") <- "Virgo Solver (time limit = 30s)"
         
         
