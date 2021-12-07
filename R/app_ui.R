@@ -1,5 +1,6 @@
+# as action button, but doesn't restore state (?)
 myActionButton <- function (inputId, label, icon = NULL, ...) {
-    tags$button(id = inputId, type = "button", class = "btn action-button",
+    tags$button(id = inputId, type = "button", class = "btn btn-default action-button",
                 list(icon, label), ...)
 }
 
@@ -67,7 +68,7 @@ app_ui <- function(request) {
                 ),
                 selectInput("nodesAs",
                             label="Interpret nodes as",
-                            choices=c("metabolites"="metabolites", 
+                            choices=c("metabolites"="metabolites",
                                       "atoms"="atoms"),
                             selected="atoms"),
                 conditionalPanel(
@@ -75,7 +76,7 @@ app_ui <- function(request) {
                     checkboxInput("autoFindModule",
                                   label="Set FDRs & run step 2 automatically",
                                   value=TRUE),
-                    actionButton("preprocess", 
+                    actionButton("preprocess",
                                  label="Step 1: Make network")
                 ),
                 myActionButton(
@@ -85,7 +86,7 @@ app_ui <- function(request) {
                     disabled=""),
                 div("or", style="text-align: center"),
                 myActionButton(
-                    "runStep1", 
+                    "runStep1",
                     label="Step 1: Make network",
                     onclick='$("#autoFindModule")[0].checked=false; $("#autoFindModule").trigger("change"); $("#preprocess").trigger("click")',
                     disabled=""
@@ -113,12 +114,12 @@ app_ui <- function(request) {
                         "network.available",
                         downloadButton("downloadNetwork", "Download XGMML"),
                         div(id="bum-plots",
-                            conditionalPanel("!input.nullkgene", 
+                            conditionalPanel("!input.nullkgene",
                                              class="col-sm-6",
                                              h4("BUM distribution for genes"),
                                              plotOutput("genesBUMPlot", width = "400px", height = "400px")
                             ),
-                            conditionalPanel("!input.nullkmet", 
+                            conditionalPanel("!input.nullkmet",
                                              class="col-sm-6",
                                              h4("BUM distribution for metabolites"),
                                              plotOutput("metsBUMPlot", width = "400px", height = "400px")
@@ -138,7 +139,7 @@ app_ui <- function(request) {
                                      numericInput("kgene",
                                                   label=HTML("k.gene"),
                                                   max=100, min=0, value=25, step=1)),
-                    
+
                     conditionalPanel("network.hasMets",
                                      checkboxInput("nullkmet",
                                                    label="Don't use metabolites for scoring",
@@ -147,7 +148,7 @@ app_ui <- function(request) {
                                                   label=HTML("k.met"),
                                                   max=100, min=0, value=25, step=1)
                     ),
-                    
+
                     checkboxInput(
                         "solveToOptimality",
                         label="Try to solve to optimality",
@@ -171,7 +172,13 @@ app_ui <- function(request) {
                 conditionalPanel("module.available",
                                  h3("Module summary"),
                                  uiOutput("moduleSummary"),
-                                 downloadButton("downloadPDF", "PDF"),
+                                 myActionButton(
+                                     "downloadSvg",
+                                     label="SVG",
+                                     onclick='var svgContent = cy.svg({scale: 1, full: true});\
+				var blob = new Blob([svgContent], {type:"image/svg+xml;charset=utf-8"});\
+				saveAs(blob, "module.svg");',
+                                     icon=shiny::icon("download")),
                                  downloadButton("downloadModule", "XGMML")
                 ),
                 div(id="legend",
@@ -187,14 +194,14 @@ app_ui <- function(request) {
             )
         )
     )
-    
+
     helpPanel <- fixedRow(
         mainPanel(id="helpPanel",
                   includeMarkdown(system.file("help.markdown", package="ShinyGATOM"))))
-    
+
     aboutPanel <- fixedRow(
         mainPanel(includeMarkdown(system.file("about.markdown", package="ShinyGATOM"))))
-    
+
     fluidPage(
         fluidPage(
             tags$head(
@@ -206,13 +213,13 @@ app_ui <- function(request) {
                 includeScript(system.file("ga.js", package="ShinyGATOM")),
                 tags$title("Shiny GATOM")
             ),
-            
+
             includeHTML(system.file("misc.xhtml", package="ShinyGATOM")),
             div(id="updateEsParameters", class="js-output"),
-            
+
             titlePanel("Shiny GATOM: integrated analysis of genes and metabolites"),
             div(id="initialized", class="js-output"),
-            
+
             fixedRow(
                 column(12,
                        tabsetPanel(
