@@ -10,6 +10,7 @@ context("Data loads & annotates with KEGG network")
 testServer(ShinyGATOM(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
+    session$setInputs(loadExampleLipidDE = FALSE)
     session$setInputs(network = "kegg")
 
     expect_true(metIdsType() == "HMDB")
@@ -21,6 +22,7 @@ context("Data loads & annotates with Rhea network")
 testServer(ShinyGATOM(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
+    session$setInputs(loadExampleLipidDE = FALSE)
     session$setInputs(network = "rhea")
 
     expect_true(metIdsType() == "HMDB")
@@ -32,6 +34,7 @@ context("Network is created with KEGG network and nodes as atoms")
 testServer(ShinyGATOM(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
+    session$setInputs(loadExampleLipidDE = FALSE)
     session$setInputs(network = "kegg")
     session$setInputs(organism = "mmu")
     session$setInputs(nodesAs = "atoms")
@@ -48,6 +51,7 @@ context("Network is created with Rhea network and nodes as metabolites")
 testServer(ShinyGATOM(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
+    session$setInputs(loadExampleLipidDE = FALSE)
     session$setInputs(network = "rhea")
     session$setInputs(organism = "mmu")
     session$setInputs(nodesAs = "metabolites")
