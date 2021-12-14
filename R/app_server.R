@@ -55,16 +55,6 @@ app_server <- function(config_file) {
         attr(v2.solver, "description") <- "Virgo Solver (time limit = 30s)"
         
         
-        # Loading example data
-        example.gene.de <- force(fread(conf$example.gene.de.path))
-        attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
-        
-        example.met.de <- force(fread(conf$example.met.de.path))
-        attr(example.met.de, "name") <- basename(conf$example.met.de.path)
-        
-        example.lip.de <- force(fread(conf$example.lip.de.path))
-        attr(example.lip.de, "name") <- basename(conf$example.lip.de.path)
-        
         longProcessStart <- function() {
             session$sendCustomMessage(type='showWaitMessage', list(value=T))
         }
@@ -121,9 +111,12 @@ app_server <- function(config_file) {
         })
         
         
-        geneDEInput <- reactive({
+        
+        geneDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleGeneDE) {
+                    example.gene.de <- force(fread(conf$example.gene.de.path))
+                    attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
                     return(example.gene.de)
                 }
                 return(NULL)
@@ -133,6 +126,7 @@ app_server <- function(config_file) {
                 # Value was reset
                 return(NULL)
             }
+            
             
             if (!is.null(input$geneDE)) {
                 loginfo("GeneDE file:")
@@ -155,8 +149,27 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
+            res <- fread(path)
+            attr(res, "name") <- deName
             
-            res <- read.table.smart.de.gene(path, idsList=gene.id.map)
+            res
+        })
+        
+        
+        geneDEInput <- reactive({
+            gene.de.raw <- geneDEInputRaw()
+            
+            if (is.null(gene.de.raw)) {
+                return(NULL)
+            }
+            
+            org.gatom.anno <- getAnnotation()
+            gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
+            
+            res <- prepareDE(gene.de.raw, gene.de.meta)
+            
+            res <- res[ , -c("signal", "signalRank")]
+            
             logdebug(capture.output(str(res)))
             if (!all(necessary.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$geneDE$datapath)
@@ -167,9 +180,12 @@ app_server <- function(config_file) {
                                 paste(necessary.de.fields, collapse=", ")))
                 }
             }
-            attr(res, "name") <- deName
+            
+            attr(res, "name") <- attr(gene.de.raw, "name")
+            
             res
         })
+        
         
         geneIdsType <- reactive({
             data <- geneDEInput()
@@ -179,7 +195,7 @@ app_server <- function(config_file) {
             
             org.gatom.anno <- getAnnotation()
             
-            res <- getGeneDEMeta(data, org.gatom.anno=org.gatom.anno)$idType
+            res <- getGeneDEMeta(data, org.gatom.anno)$idType
             
             if (length(res) != 1) {
                 stop("Can't determine type of IDs for genes")
@@ -204,6 +220,7 @@ app_server <- function(config_file) {
                     ))),
                 p("Top DE genes:"))
         })
+        
         
         output$geneDETable <- renderTable({
             data <- geneDEInput()
@@ -274,15 +291,19 @@ app_server <- function(config_file) {
             format(as.data.frame(head(data, n=20)), digits=3)
         })
         
-        metDEInput <- reactive({
+        metDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleMetDE) {
+                    example.met.de <- force(fread(conf$example.met.de.path))
+                    attr(example.met.de, "name") <- basename(conf$example.met.de.path)
                     return(example.met.de)
                 }
                 return(NULL)
             }
             
             if (input$loadExampleLipidDE){
+                example.lip.de <- force(fread(conf$example.lip.de.path))
+                attr(example.lip.de, "name") <- basename(conf$example.lip.de.path)
                 return(example.lip.de)
             }
             
@@ -300,7 +321,38 @@ app_server <- function(config_file) {
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
             
-            res <- read.table.smart.de.met(input$metDE$datapath)
+            res <- fread(input$metDE$datapath)
+            attr(res, "name") <- input$metDE$name
+            
+            res
+        })
+        
+        metDEInput <- reactive({
+            met.de.raw <- metDEInputRaw()
+            if (is.null(met.de.raw)) {
+                return(NULL)
+            }
+            
+            if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
+                met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
+                                            path = conf$path.to.met.lipid.db)
+                met.db <- met.lipid.db
+            } else if (input$network == "kegg"){
+                met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
+                                           path = conf$path.to.met.kegg.db)
+                met.db <- met.kegg.db
+            } else {
+                met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
+                                           path = conf$path.to.met.rhea.db)
+                met.db <- met.rhea.db
+            }
+            
+            met.de.meta <- getMetDEMeta(met.de.raw, met.db)
+            
+            res <- prepareDE(met.de.raw, met.de.meta)
+            
+            res <- res[ , -c("signal", "signalRank")]
+            
             logdebug(capture.output(str(res)))
             if (!all(necessary.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$metDE$datapath)
@@ -311,8 +363,10 @@ app_server <- function(config_file) {
                                 paste(necessary.de.fields, collapse=", ")))
                 }
             }
-            attr(res, "name") <- input$metDE$name
+            
+            attr(res, "name") <- attr(met.de.raw, "name")
             res
+            
         })
         
         metIdsType <- reactive({
@@ -840,7 +894,9 @@ app_server <- function(config_file) {
         })
         
         output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput()))
-
+        
+        # afterCall()
+        
         output$downloadNetwork <- downloadHandler(
             filename = reactive({ paste0("network.", tolower(gInput()$network$organism), ".xgmml") }),
             content = function(file) {

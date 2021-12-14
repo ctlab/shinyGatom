@@ -107,6 +107,7 @@ app_ui <- function(request) {
                 div(class="DEBlock",
                     h3("Differential expression for genes"),
                     uiOutput("geneDESummary"),
+                    # uiOutput("geneDEColumns"),
                     uiOutput("geneDETable"),
                     uiOutput("geneDENotMapped"),
                     uiOutput("geneDENotMappedTable")
@@ -217,7 +218,8 @@ app_ui <- function(request) {
     fluidPage(
         fluidPage(
             tags$head(
-                tags$script(src="www/svg-pan-zoom.min.js"),
+                # tags$script(src = "www/cytoscape-panzoom.js"),
+                # tags$link(rel = "stylesheet", type = "text/css", href = "www/cytoscape.js-panzoom.css"),
                 tags$script(src="www/d3.v3.min.js"),
                 #tags$script(src="www/d3.v3.js"),
                 tags$script(src="www/gam.js"),

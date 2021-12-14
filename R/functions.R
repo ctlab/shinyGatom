@@ -1,4 +1,9 @@
 
+# afterCall <- function() {
+#     shinyjs::runjs("setTimeout(function(){cy.panzoom()},3500)")
+# }
+
+
 getJsTooltip <- function(attr.values) {
     attr.strings <- list()
     attr.names <- names(attr.values)
@@ -146,21 +151,23 @@ scoreGraphShiny <- function(g, k.gene, k.met,
 
 ############################################### NEW FUNCTIONS
 
-prepareForShinyCyJS <- function(module){
+prepareForShinyCyJS <- function(module, layout=list(name = "cose")){
     if (is.null(module)) {
-        return(NULL)
-    }
+        nodes <- data.frame()
+        edges <- data.frame()
+    } else {
+        
+        vertex.table <- as_data_frame(module, what="vertices")
+        edge.table <- as_data_frame(module, what="edges")
+        
+        nodes <- getJsNodeStyleAttributes(vertex.table)
+        edges <- getJsEdgeStyleAttributes(edge.table)
+        
+        nodes = buildElems(nodes, type = 'Node')
+        edges = buildElems(edges, type = 'Edge')
+        }
     
-    vertex.table <- as_data_frame(module, what="vertices")
-    edge.table <- as_data_frame(module, what="edges")
-    
-    nodes <- getJsNodeStyleAttributes(vertex.table)
-    edges <- getJsEdgeStyleAttributes(edge.table)
-    
-    nodes = buildElems(nodes, type = 'Node')
-    edges = buildElems(edges, type = 'Edge')
-    
-    res = shinyCyJS(c(nodes, edges))
+    res = shinyCyJS(c(nodes, edges), layout = layout)
     res
 }
 
@@ -235,83 +242,6 @@ normalizeName <- function(x) {
 }
 
 
-read.table.smart <- function(path, ...) {
-    fields <- list(...)
-    conn <- file(path)
-    header <- readLines(conn, n=1)
-    close(conn)
-
-    seps <- c("\t", " ", ",", ";")
-    sep <- seps[which.max(table(unlist(strsplit(header, "")))[seps])]
-
-    res <- read.table(path, sep=sep, header=T, stringsAsFactors=F, check.names=F, quote='"')
-    res <- as.data.table(res, keep.rownames=is.character(attr(res, "row.names")))
-
-    oldnames <- character(0)
-    newnames <- character(0)
-
-    for (field in names(fields)) {
-        if (field %in% colnames(res)) {
-            next
-        }
-
-        z <- na.omit(
-            match(
-                normalizeName(c(field, fields[[field]])),
-                normalizeName(colnames(res))))
-        if (length(z) == 0) {
-            next
-        }
-
-        oldnames <- c(oldnames, colnames(res)[z[1]])
-        newnames <- c(newnames, field)
-    }
-
-    logdebug("smart renaming")
-    logdebug("from: %s", paste0(oldnames, collapse=" "))
-    logdebug("to: %s", paste0(newnames, collapse=" "))
-    setnames(res, oldnames, newnames)
-    res
-}
-
-
-read.table.smart.de <- function(path, ID=ID) {
-    read.table.smart(path, ID=ID, pval=c("pvalue"), log2FC=c("log2foldchange", "logfc"), name.orig=c("name"))
-}
-
-
-read.table.smart.de.gene <- function(path, idsList) {
-    res <- read.table.smart.de(path, ID="ID")
-    idColumn <- findIdColumn(res, idsList)
-    if (idColumn$matchRatio < 0.1) {
-        z <- na.omit(
-            match(
-                normalizeName(c("ID", "gene id", "gene", "entrez", "", "rn", "symbol")),
-                normalizeName(colnames(res))))
-        if (length(z) == 0) {
-            setnames(res, colnames(res)[1], "ID")
-        } else {
-            setnames(res, colnames(res)[z[1]], "ID")
-        }
-
-    } else {
-        if (idColumn$column != "ID" && "ID" %in% colnames(res)) {
-            setnames(res, "ID", "ID.old")
-        }
-        setnames(res, idColumn$column, "ID")
-    }
-    res
-}
-
-read.table.smart.de.met <- function(path) {
-    res <- read.table.smart.de(path, ID=c("metabolite", "kegg", "hmdb", "", "rn"))
-    if (!"ID" %in% colnames(res)) {
-        setnames(res, colnames(res)[1], "ID")
-    }
-    res
-}
-
-
 necessary.de.fields <- c("ID", "pval")
 
 
@@ -356,62 +286,4 @@ makeJsAssignments  <- function(...) {
     args <- list(...)
     values <- sapply(args, toJsLiteral)
     paste0(names(values), " = ", values, ";\n", collapse="")
-}
-
-
-.intersectionSize <- function(...) { length(intersect(...))}
-
-
-findIdColumn <- function(de, idsList,
-                         sample.size=1000,
-                         match.threshold=0.6,
-                         remove.ensembl.revisions=TRUE) {
-    # first looking for column with base IDs
-    de.sample <- if (nrow(de) < sample.size) {
-        copy(de)
-    } else {
-        de[sample(seq_len(nrow(de)), sample.size), ]
-    }
-    columnSamples <- lapply(de.sample, as.character)
-
-
-    if (remove.ensembl.revisions) {
-        columnSamples <- lapply(columnSamples, gsub,
-                                pattern="(ENS\\w*\\d*)\\.\\d*",
-                                replacement="\\1")
-    }
-
-    ss <- sapply(columnSamples,
-                 .intersectionSize, idsList[[1]])
-
-    if (max(ss) / nrow(de.sample) >= match.threshold) {
-        # we found a good column with base IDs
-        return(list(column=colnames(de)[which.max(ss)],
-                    type=names(idsList)[1],
-                    matchRatio=max(ss) / nrow(de.sample)))
-    }
-
-    z <- .pairwiseCompare(.intersectionSize,
-                          columnSamples,
-                          idsList)
-
-    bestMatch <- which(z == max(z), arr.ind = TRUE)[1,]
-    return(list(column=colnames(de)[bestMatch["row"]],
-                type=names(idsList)[bestMatch["col"]],
-                matchRatio=max(z) / nrow(de.sample)))
-}
-
-
-.pairwiseCompare <- function (FUN, list1, list2 = list1, ...)
-{
-    additionalArguments <- list(...)
-    f1 <- function(...) {
-        mapply(FUN = function(x, y) {
-            do.call(FUN, c(list(list1[[x]], list2[[y]]), additionalArguments))
-        }, ...)
-    }
-    z <- outer(seq_along(list1), seq_along(list2), FUN = f1)
-    rownames(z) <- names(list1)
-    colnames(z) <- names(list2)
-    z
 }
