@@ -3,9 +3,17 @@ library(shiny)
 # devtools::load_all()
 # debug(testServer)
 # undebug(testServer)
+# devtools::test_active_file()
+
+# Sys.setenv("R_CONFIG_ACTIVE"="local")
+# Sys.setenv("GATOM_LOCAL_DATA"="/home/masha/Research/RCode/RShiny/data")
+# Sys.setenv("CPLEX_HOME"="/home/masha/cplex")
+
+conf <- config::get(file=system.file('config.yml', package = 'ShinyGATOM'),
+                    use_parent = FALSE)
 
 
-## Data loads & annotates with KEGG network
+## Data is loaded & annotated with KEGG network
 context("Data loads & annotates with KEGG network")
 testServer(ShinyGATOM(), {
     session$setInputs(loadExampleGeneDE = TRUE)
@@ -17,8 +25,28 @@ testServer(ShinyGATOM(), {
 })
 
 
-## Data loads & annotates with Rhea network
-context("Data loads & annotates with Rhea network")
+## Data is read & annotated with KEGG network
+context("Data is read & annotated with KEGG network")
+testServer(ShinyGATOM(), {
+    session$setInputs(loadExampleGeneDE = FALSE)
+    session$setInputs(loadExampleMetDE = FALSE)
+    session$setInputs(loadExampleLipidDE = FALSE)
+    
+    session$setInputs(network = "kegg")
+    session$setInputs(organism = "mmu")
+    session$setInputs(nodesAs = "atoms")
+    
+    session$setInputs(geneDE=data.frame(datapath=conf$example.gene.de.path, 
+                                        name="Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
+    session$setInputs(metDE=data.frame(datapath=conf$example.met.de.path, 
+                                       name="Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
+    
+    expect_equal(metIdsType(), "HMDB")
+})
+
+
+## Data is loaded & annotated with Rhea network
+context("Data is loaded & annotated with Rhea network")
 testServer(ShinyGATOM(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
@@ -73,21 +101,21 @@ testServer(ShinyGATOM(), {
 #     session$setInputs(nodesAs = "atoms")
 #     session$setInputs(autoFindModule = TRUE)
 #     session$setInputs(preprocess = TRUE)
-#     
+#
 #     session$setInputs(kgene = 25)
 #     session$setInputs(nullkgene = FALSE)
 #     session$setInputs(kmet = 25)
 #     session$setInputs(nullkmet = FALSE)
-#     
+#
 #     session$setInputs(runStep1 = "click")
-#     
+#
 #     session$setInputs(addHighlyExpressedEdges = FALSE)
 #     session$setInputs(solveToOptimality = FALSE)
 #     session$setInputs(metaboliteActions = "NoAction")
 #     session$setInputs(find = TRUE)
-#     
+#
 #     session$setInputs(runAll = "click")
-#     
+#
 #     module <- moduleInput()
 #     expect_true(!is.null(V(module)))
 # })
