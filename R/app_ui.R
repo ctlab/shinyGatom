@@ -219,7 +219,7 @@ app_ui <- function(request) {
         fluidPage(
             tags$head(
                 # tags$script(src = "www/cytoscape-panzoom.js"),
-                # tags$link(rel = "stylesheet", type = "text/css", href = "www/cytoscape.js-panzoom.css"),
+                # tags$link(rel="stylesheet", type="text/css", href="www/cytoscape.js-panzoom.css"),
                 tags$script(src="www/d3.v3.min.js"),
                 #tags$script(src="www/d3.v3.js"),
                 tags$script(src="www/gam.js"),
