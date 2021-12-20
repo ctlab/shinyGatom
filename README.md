@@ -1,3 +1,3 @@
-# Shiny GAM
+# Shiny GATOM
 
-A web-service for integrated network analysis of transcriptional and metabolic data. Deployed version can be found at https://artyomovlab.wustl.edu/shiny/gam/
+A web-service for integrated network analysis of transcriptional and metabolic data. Deployed version can be found at https://ctlab.itmo.ru/shiny/gatom/
