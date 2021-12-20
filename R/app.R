@@ -1,7 +1,4 @@
-# load_all("/home/masha/Research/RCode/RShiny/shinyCyJS")
-
-
-#' starts shiny GATOM application
+#' starts Shiny GATOM application
 #' @import shiny
 #' @import data.table
 #' @import gatom
@@ -14,9 +11,9 @@
 #' @import fgsea
 #' @import markdown
 #' @export
-ShinyGATOM <- function(config_file=system.file('config.yml', package = 'ShinyGATOM')) {
+shinyGatom <- function(config_file=system.file('config.yml', package = 'shinyGatom')) {
     addResourcePath('/www',
-                    system.file('www', package = 'ShinyGATOM'))
+                    system.file('www', package = 'shinyGatom'))
 
     shinyApp(app_ui(config_file), app_server(config_file))
 }

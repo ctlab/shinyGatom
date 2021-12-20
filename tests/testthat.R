@@ -1,4 +1,4 @@
 library(testthat)
-library(ShinyGATOM)
+library(shinyGatom)
 
-test_check("ShinyGATOM")
+test_check("shinyGatom")

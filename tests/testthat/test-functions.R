@@ -8,7 +8,7 @@ example.gene.de <- gene.de.rawEx
 data("met.kegg.dbEx")
 met.kegg.db <- met.kegg.dbEx
 
-conf <- config::get(file=system.file('config.yml', package = 'ShinyGATOM'),
+conf <- config::get(file=system.file('config.yml', package = 'shinyGatom'),
                     use_parent = FALSE)
 
 test_that("lazyReadRDS works with remote files", {
@@ -21,7 +21,7 @@ test_that("lazyReadRDS works with remote files", {
 
 
 test_that("Node attributes are created", {
-    load(system.file('testdata/moduleEx.Rda', package = 'ShinyGATOM'))
+    load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
     vertex.table <- as_data_frame(module, what="vertices")
     res <- getJsNodeStyleAttributes(vertex.table)
     expect_true(!is.null(res$tooltip))
@@ -29,7 +29,7 @@ test_that("Node attributes are created", {
 
 
 test_that("Edge attributes are created", {
-    load(system.file('testdata/moduleEx.Rda', package = 'ShinyGATOM'))
+    load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
     edge.table <- as_data_frame(module, what="edges")
     res <- getJsEdgeStyleAttributes(edge.table)
     expect_true(!is.null(res$tooltip))
@@ -37,7 +37,7 @@ test_that("Edge attributes are created", {
 
 
 test_that("ShinyCyJs data is created", {
-    load(system.file('testdata/moduleEx.Rda', package = 'ShinyGATOM'))
+    load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
     res <- prepareForShinyCyJS(module)
     expect_true(!is.null(res))
 })

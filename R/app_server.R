@@ -170,6 +170,7 @@ app_server <- function(config_file) {
             gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
 
             res <- prepareDE(gene.de.raw, gene.de.meta)
+            res[, signalRank := NULL] # todo
 
             logdebug(capture.output(str(res)))
             if (!all(necessary.gene.de.fields %in% names(res))) {

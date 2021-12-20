@@ -210,10 +210,10 @@ app_ui <- function(config_file) {
 
     helpPanel <- fixedRow(
         mainPanel(id="helpPanel",
-                  includeMarkdown(system.file("help.markdown", package="ShinyGATOM"))))
+                  includeMarkdown(system.file("help.markdown", package="shinyGatom"))))
 
     aboutPanel <- fixedRow(
-        mainPanel(includeMarkdown(system.file("about.markdown", package="ShinyGATOM"))))
+        mainPanel(includeMarkdown(system.file("about.markdown", package="shinyGatom"))))
 
     fluidPage(
         fluidPage(
@@ -224,11 +224,11 @@ app_ui <- function(config_file) {
                 #tags$script(src="www/d3.v3.js"),
                 tags$script(src="www/gam.js"),
                 tags$link(rel="stylesheet", href="www/gam.css"),
-                includeScript(system.file("ga.js", package="ShinyGATOM")),
+                includeScript(system.file("ga.js", package="shinyGatom")),
                 tags$title("Shiny GATOM")
             ),
 
-            includeHTML(system.file("misc.xhtml", package="ShinyGATOM")),
+            includeHTML(system.file("misc.xhtml", package="shinyGatom")),
             div(id="updateEsParameters", class="js-output"),
 
             titlePanel("Shiny GATOM: integrated analysis of genes and metabolites"),

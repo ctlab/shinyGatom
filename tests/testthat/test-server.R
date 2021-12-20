@@ -9,13 +9,13 @@ library(shiny)
 # Sys.setenv("GATOM_LOCAL_DATA"="/home/masha/Research/RCode/RShiny/data")
 # Sys.setenv("CPLEX_HOME"="/home/masha/cplex")
 
-conf <- config::get(file=system.file('config.yml', package = 'ShinyGATOM'),
+conf <- config::get(file=system.file('config.yml', package = 'shinyGatom'),
                     use_parent = FALSE)
 
 
 ## Data is loaded & annotated with KEGG network
 context("Data loads & annotates with KEGG network")
-testServer(ShinyGATOM(), {
+testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
     session$setInputs(loadExampleLipidDE = FALSE)
@@ -27,27 +27,27 @@ testServer(ShinyGATOM(), {
 
 ## Data is read & annotated with KEGG network
 context("Data is read & annotated with KEGG network")
-testServer(ShinyGATOM(), {
+testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = FALSE)
     session$setInputs(loadExampleMetDE = FALSE)
     session$setInputs(loadExampleLipidDE = FALSE)
-    
+
     session$setInputs(network = "kegg")
     session$setInputs(organism = "mmu")
     session$setInputs(nodesAs = "atoms")
-    
-    session$setInputs(geneDE=data.frame(datapath=conf$example.gene.de.path, 
+
+    session$setInputs(geneDE=data.frame(datapath=conf$example.gene.de.path,
                                         name="Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
-    session$setInputs(metDE=data.frame(datapath=conf$example.met.de.path, 
+    session$setInputs(metDE=data.frame(datapath=conf$example.met.de.path,
                                        name="Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
-    
+
     expect_equal(metIdsType(), "HMDB")
 })
 
 
 ## Data is loaded & annotated with Rhea network
 context("Data is loaded & annotated with Rhea network")
-testServer(ShinyGATOM(), {
+testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
     session$setInputs(loadExampleLipidDE = FALSE)
@@ -59,7 +59,7 @@ testServer(ShinyGATOM(), {
 
 ## Network is created with KEGG network and nodes as atoms
 context("Network is created with KEGG network and nodes as atoms")
-testServer(ShinyGATOM(), {
+testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
     session$setInputs(loadExampleLipidDE = FALSE)
@@ -76,7 +76,7 @@ testServer(ShinyGATOM(), {
 
 ## Network is created with Rhea network and nodes as metabolites
 context("Network is created with Rhea network and nodes as metabolites")
-testServer(ShinyGATOM(), {
+testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = TRUE)
     session$setInputs(loadExampleMetDE = TRUE)
     session$setInputs(loadExampleLipidDE = FALSE)
@@ -90,10 +90,30 @@ testServer(ShinyGATOM(), {
     expect_true(!is.null(V(g)))
 })
 
+testServer(shinyGatom(), {
+    session$setInputs(loadExampleGeneDE = FALSE)
+    session$setInputs(loadExampleMetDE = FALSE)
+    session$setInputs(loadExampleLipidDE = FALSE)
+
+    session$setInputs(network = "kegg")
+    session$setInputs(organism = "hsa")
+    session$setInputs(nodesAs = "metabolites")
+
+    session$setInputs(geneDE=data.frame(datapath="https://artyomovlab.wustl.edu/publications/supp_materials/GAM/MCF10A.Ctrl.vs.2DG.gene.de.tsv",
+                                        name="MCF10A.Ctrl.vs.2DG.gene.de.tsv"))
+
+    session$setInputs(preprocess = TRUE)
+    session$setInputs(runStep1 = "click")
+
+    g <- gInput()
+    expect_true(!is.null(V(g)))
+})
+
+
 
 # ## Module is found
 # context("Module is found")
-# testServer(ShinyGATOM(), {
+# testServer(shinyGatom(), {
 #     session$setInputs(loadExampleGeneDE = TRUE)
 #     session$setInputs(loadExampleMetDE = TRUE)
 #     session$setInputs(network = "kegg")

@@ -17,7 +17,7 @@ Sys.setenv("CPLEX_HOME"="/home/masha/cplex")
 
 ## Running app
 load_all()
-ShinyGATOM()
+shinyGatom()
 
 
 ## Testing
