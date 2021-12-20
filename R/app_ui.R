@@ -118,20 +118,22 @@ app_ui <- function(config_file) {
                     uiOutput("networkSummary"),
                     conditionalPanel(
                         "network.available",
-                        downloadButton("downloadNetwork", "Download XGMML"),
-                        # textOutput("test"),
-                        div(id="bum-plots",
-                            conditionalPanel("!input.nullkgene && network.hasGenes",
-                                             class="col-sm-6",
-                                             h4("BUM distribution for genes"),
-                                             plotOutput("genesBUMPlot", width = "400px", height = "400px")
-                            ),
-                            conditionalPanel("!input.nullkmet && network.hasMets",
-                                             class="col-sm-6",
-                                             h4("BUM distribution for metabolites"),
-                                             plotOutput("metsBUMPlot", width = "400px", height = "400px")
-                            )
-                        )
+                        downloadButton("downloadNetwork", "Download XGMML")
+                        # # :todo: rework the UI and uncomment
+                        # ,
+                        # div(id="bum-plots",
+                        #     conditionalPanel("network.hasGenes",
+                        #                      class="col-sm-6",
+                        #                      h4("BUM distribution for genes"),
+                        #                      plotOutput("genesBUMPlot", width = "400px", height = "400px")
+                        #     ),
+                        #     conditionalPanel("network.hasMets",
+                        #                      class="col-sm-6",
+                        #                      h4("BUM distribution for metabolites"),
+                        #                      plotOutput("metsBUMPlot", width = "400px", height = "400px")
+                        #     )
+                        # )
+
                     )
                 ),
             )
@@ -143,17 +145,19 @@ app_ui <- function(config_file) {
                                      checkboxInput("nullkgene",
                                                    label="Don't use genes for scoring",
                                                    value=FALSE),
-                                     numericInput("kgene",
-                                                  label=HTML("k.gene"),
-                                                  max=100, min=0, value=25, step=1)),
+                                     conditionalPanel("!input.nullkgene",
+                                        numericInput("kgene",
+                                                  label=HTML("Number of positive genes"),
+                                                  max=100, min=0, value=50, step=1))),
 
                     conditionalPanel("network.hasMets",
                                      checkboxInput("nullkmet",
                                                    label="Don't use metabolites for scoring",
                                                    value=FALSE),
-                                     numericInput("kmet",
-                                                  label=HTML("k.met"),
-                                                  max=100, min=0, value=25, step=1)
+                                     conditionalPanel("!input.nullkmet",
+                                        numericInput("kmet",
+                                                  label=HTML("Number of positive metabolites"),
+                                                  max=100, min=0, value=50, step=1))
                     ),
 
                     checkboxInput(

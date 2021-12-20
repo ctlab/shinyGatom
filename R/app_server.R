@@ -661,33 +661,34 @@ app_server <- function(config_file) {
             res
         })
 
-
-        output$genesBUMPlot <- renderPlot({
-            g <- gInput()
-            if (is.null(g)) {
-                return(NULL)
-            }
-            gen.bum <- isolate(genBUM())
-            if (is.null(gen.bum)) {
-                return(NULL)
-            }
-
-            plot(gen.bum)
-        })
-
-
-        output$metsBUMPlot <- renderPlot({
-            g <- gInput()
-            if (is.null(g)) {
-                return(NULL)
-            }
-            met.bum <- isolate(metBUM())
-            if (is.null(met.bum)) {
-                return(NULL)
-            }
-
-            plot(met.bum)
-        })
+        # # :todo: rework the UI and uncomment
+        #
+        # output$genesBUMPlot <- renderPlot({
+        #     g <- gInput()
+        #     if (is.null(g)) {
+        #         return(NULL)
+        #     }
+        #     gen.bum <- isolate(genBUM())
+        #     if (is.null(gen.bum)) {
+        #         return(NULL)
+        #     }
+        #
+        #     plot(gen.bum)
+        # })
+        #
+        #
+        # output$metsBUMPlot <- renderPlot({
+        #     g <- gInput()
+        #     if (is.null(g)) {
+        #         return(NULL)
+        #     }
+        #     met.bum <- isolate(metBUM())
+        #     if (is.null(met.bum)) {
+        #         return(NULL)
+        #     }
+        #
+        #     plot(met.bum)
+        # })
 
 
         output$networkParameters <- reactive({
