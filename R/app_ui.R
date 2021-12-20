@@ -60,9 +60,11 @@ app_ui <- function(config_file) {
                     selectInput("organism",
                                 label="Select an organism",
                                 choices=c("Mouse"="mmu",
-                                          "Human"="hsa",
-                                          "Arabidopsis"="ath",
-                                          "Yeast"="sce"),
+                                          "Human"="hsa"
+                                          # ,
+                                          # "Arabidopsis"="ath",
+                                          # "Yeast"="sce"
+                                          ),
                                 selected="mmu"
                     ),
                     fileInput("geneDE", "File with DE for genes"),
