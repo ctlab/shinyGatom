@@ -171,16 +171,14 @@ app_server <- function(config_file) {
 
             res <- prepareDE(gene.de.raw, gene.de.meta)
 
-            res <- res[ , -c("signal", "signalRank")]
-
             logdebug(capture.output(str(res)))
-            if (!all(necessary.de.fields %in% names(res))) {
+            if (!all(necessary.gene.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$geneDE$datapath)
                 if (grepl("xlsx?$", input$geneDE$name)) {
                     stop("We do not support excel files yet, please, use tab-separated files instead")
                 } else{
                     stop(paste0("Genomic differential expression data should contain at least these fields: ",
-                                paste(necessary.de.fields, collapse=", ")))
+                                paste(necessary.gene.de.fields, collapse=", ")))
                 }
             }
 
@@ -354,16 +352,14 @@ app_server <- function(config_file) {
 
             res <- prepareDE(met.de.raw, met.de.meta)
 
-            res <- res[ , -c("signal", "signalRank")]
-
             logdebug(capture.output(str(res)))
-            if (!all(necessary.de.fields %in% names(res))) {
+            if (!all(necessary.met.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$metDE$datapath)
                 if (grepl("xlsx?$", input$metDE$name)) {
                     stop("We do not support excel files yet, please, use tab-separated files instead")
                 } else {
                     stop(paste0("Metabolic differential expression data should contain at least these fields: ",
-                                paste(necessary.de.fields, collapse=", ")))
+                                paste(necessary.met.de.fields, collapse=", ")))
                 }
             }
 

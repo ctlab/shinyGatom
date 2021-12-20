@@ -60,34 +60,34 @@ scoreGraphShiny <- function(g, k.gene, k.met,
     } else {
         warnWrapper <- suppressWarnings
     }
-    
+
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    
+
     if (!is.null(k.met)) {
         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         if(is.null(metabolite.bum)) {
             warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
-        
+
         if (metabolite.bum$a > 0.5) {
             V(g)$score <- 0
             warning("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution")
-            
+
         } else {
             vertex.threshold <- if (k.met > length(pvalsToFit)) 1 else {
                 sort(pvalsToFit)[k.met]
             }
-            
+
             vertex.threshold <- min(vertex.threshold,
                                     BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
-            
+
             met.fdr <- gatom:::.reversefdrThreshold(vertex.threshold, metabolite.bum)
-            
+
             gatom:::.messagef("Metabolite p-value threshold: %f", vertex.threshold)
             gatom:::.messagef("Metabolite BU alpha: %f", metabolite.bum$a)
             gatom:::.messagef("FDR for metabolites: %f", met.fdr)
-            
+
             V(g)$score <- with(vertex.table,
                                (metabolite.bum$a - 1) *
                                    (log(gatom:::.replaceNA(pval, 1)) - log(vertex.threshold)))
@@ -97,33 +97,33 @@ scoreGraphShiny <- function(g, k.gene, k.met,
     else {
         V(g)$score <- 0
         V(g)$signal <- ""
-        
+
     }
-    
+
     if (!is.null(k.gene)) {
         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
         if(is.null(gene.bum)){
             warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
-        
+
         if(gene.bum$a > 0.5) {
             E(g)$score <- 0
             warning("Edge scores have been assigned to 0 due to an inappropriate p-value distribution")
-            
+
         } else {
             edge.threshold <- if (k.gene > length(pvalsToFit)) 1 else {
                 sort(pvalsToFit)[k.gene]
             }
-            
+
             edge.threshold <- min(edge.threshold,
                                   BioNet::fdrThreshold(edge.threshold.min, gene.bum))
-            
+
             gene.fdr <- gatom:::.reversefdrThreshold(edge.threshold, gene.bum)
-            
+
             gatom:::.messagef("Gene p-value threshold: %f", edge.threshold)
             gatom:::.messagef("Gene BU alpha: %f", gene.bum$a)
             gatom:::.messagef("FDR for genes: %f", gene.fdr)
-            
+
             E(g)$score <- with(edge.table,
                                (gene.bum$a - 1) *
                                    (log(gatom:::.replaceNA(pval, 1)) - log(edge.threshold)))
@@ -137,7 +137,7 @@ scoreGraphShiny <- function(g, k.gene, k.met,
     if (raw) {
         return(g)
     }
-    
+
     res <- normalize_sgmwcs_instance(g,
                                      nodes.weight.column = "score",
                                      edges.weight.column = "score",
@@ -156,24 +156,24 @@ prepareForShinyCyJS <- function(module, layout=list(name = "cose", animate = FAL
         # nodes <- data.frame()
         # edges <- data.frame()
     } else {
-        
+
         vertex.table <- as_data_frame(module, what="vertices")
         edge.table <- as_data_frame(module, what="edges")
-        
+
         nodes <- getJsNodeStyleAttributes(vertex.table)
         edges <- getJsEdgeStyleAttributes(edge.table)
-        
+
         nodes = buildElems(nodes, type = 'Node')
         edges = buildElems(edges, type = 'Edge')
         }
-    
+
     res = shinyCyJS(c(nodes, edges), layout = layout)
     res
 }
 
 
 #' @import gatom
-fitGenesToBUM <- function(g, 
+fitGenesToBUM <- function(g,
                           k.gene,
                           show.warnings=TRUE
 ) {
@@ -197,7 +197,7 @@ fitGenesToBUM <- function(g,
 
 
 #' @import gatom
-fitMetsToBUM <- function(g, 
+fitMetsToBUM <- function(g,
                          k.met,
                          show.warnings=TRUE
 ) {
@@ -242,7 +242,9 @@ normalizeName <- function(x) {
 }
 
 
-necessary.de.fields <- c("ID", "pval")
+necessary.gene.de.fields <- c("ID", "pval", "log2FC", "baseMean")
+
+necessary.met.de.fields <- c("ID", "pval", "log2FC")
 
 
 vector2html <- function(v) {
