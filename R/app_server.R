@@ -118,7 +118,7 @@ app_server <- function(config_file) {
         geneDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleGeneDE) {
-                    example.gene.de <- force(fread(conf$example.gene.de.path))
+                    example.gene.de <- force(fread(conf$example.gene.de.path, colClasses="character"))
                     attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
                     return(example.gene.de)
                 }
@@ -152,7 +152,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
 
-            res <- fread(path)
+            res <- fread(path, colClasses="character")
             attr(res, "name") <- deName
 
             res
@@ -254,7 +254,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             notMapped <- notMappedGenes()
-            network <- getNetwork()
+            # network <- getNetwork()
             org.gatom.anno <- getAnnotation()
 
             div(
@@ -295,7 +295,7 @@ app_server <- function(config_file) {
         metDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleMetDE) {
-                    example.met.de <- force(fread(conf$example.met.de.path))
+                    example.met.de <- force(fread(conf$example.met.de.path, colClasses="character"))
                     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
                     return(example.met.de)
                 }
@@ -303,7 +303,7 @@ app_server <- function(config_file) {
             }
 
             if (input$loadExampleLipidDE){
-                example.lip.de <- force(fread(conf$example.lip.de.path))
+                example.lip.de <- force(fread(conf$example.lip.de.path, colClasses="character"))
                 attr(example.lip.de, "name") <- basename(conf$example.lip.de.path)
                 return(example.lip.de)
             }
@@ -322,7 +322,7 @@ app_server <- function(config_file) {
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
 
-            res <- fread(input$metDE$datapath)
+            res <- fread(input$metDE$datapath, colClasses="character")
             attr(res, "name") <- input$metDE$name
 
             res
@@ -458,7 +458,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             notMapped <- notMappedMets()
-            network <- getNetwork()
+            # network <- getNetwork()
 
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
@@ -552,20 +552,20 @@ app_server <- function(config_file) {
                 keepReactionsWithoutEnzymes <- FALSE
                 gene2reaction.extra <- NULL
 
-                if ((input$network == "lipidomic") || (input$loadExampleLipidDE)) {
+                if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
                     met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                                 path = conf$path.to.met.lipid.db)
                     met.db <- met.lipid.db
 
-                    if (input$loadExampleLipidDE){
-                        gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]]))[gene != "-"]
+                    if (isolate(input$loadExampleLipidDE)) {
+                        gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]], colClasses="character"))[gene != "-"]
                     } else {
-                        gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]]))[gene != "-"]
+                        gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]], colClasses="character"))[gene != "-"]
                     }
 
                     topology <- "metabolites"
                     keepReactionsWithoutEnzymes <- TRUE
-                } else if (input$network == "kegg"){
+                } else if (isolate(input$network) == "kegg"){
                     met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
                                                path = conf$path.to.met.kegg.db)
                     met.db <- met.kegg.db
@@ -578,15 +578,15 @@ app_server <- function(config_file) {
                 g <- makeMetabolicGraph(network=network,
                                         topology=topology,
                                         org.gatom.anno=org.gatom.anno,
-                                        gene.de=geneDEInput(),
+                                        gene.de=gene.de,
                                         met.db=met.db,
-                                        met.de=metDEInput(),
+                                        met.de=met.de,
                                         met.to.filter=fread(system.file("mets2mask.lst",
                                                                         package="gatom"))$ID,
                                         keepReactionsWithoutEnzymes = keepReactionsWithoutEnzymes,
                                         gene2reaction.extra = gene2reaction.extra)
 
-                if ((input$network == "lipidomic") || (input$loadExampleLipidDE)) {
+                if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
                     g <- simplify(g, remove.multiple = T)
                 }
 

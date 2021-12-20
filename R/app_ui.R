@@ -45,16 +45,6 @@ app_ui <- function(config_file) {
                     "input.loadExampleGeneDE || input.loadExampleMetDE",
                     p("Organism: Mouse")
                 ),
-                conditionalPanel("!input.loadExampleLipidDE",
-                                 selectInput("network",
-                                             label="Select type of network",
-                                             choices=c("KEGG network"="kegg",
-                                                       "Rhea network"="rhea",
-                                                       "Rhea lipid subnetwork"="lipidomic"),
-                                             selected="kegg")
-                                 ),
-                conditionalPanel("input.loadExampleLipidDE",
-                                 p("Network: Lipidomic Rhea subnetwork")),
                 conditionalPanel(
                     "(!input.loadExampleGeneDE && !input.loadExampleMetDE) && !input.loadExampleLipidDE",
                     selectInput("organism",
@@ -70,6 +60,16 @@ app_ui <- function(config_file) {
                     fileInput("geneDE", "File with DE for genes"),
                     fileInput("metDE", "File with DE for metabolites")
                 ),
+                conditionalPanel("!input.loadExampleLipidDE",
+                                 selectInput("network",
+                                             label="Network type",
+                                             choices=c("KEGG network"="kegg",
+                                                       "Rhea network"="rhea",
+                                                       "Rhea lipid subnetwork"="lipidomic"),
+                                             selected="kegg")
+                ),
+                conditionalPanel("input.loadExampleLipidDE",
+                                 p("Network type: Lipidomic Rhea subnetwork")),
                 conditionalPanel("(!input.loadExampleLipidDE) && (input.network != 'lipidomic')",
                                  selectInput("nodesAs",
                                              label="Network topology",

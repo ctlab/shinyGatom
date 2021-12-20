@@ -1,6 +1,6 @@
 ### About
 
-Authors: Mariia Emelianova, Anastasiia Gainullina, Alexander Loboda, Nikolay Poperechnyi, Maxim Artyomov, Alexey Sergushichev.
+Authors: Anastasiia Gainullina, Mariia Emelianova, Alexander Loboda, Nikolay Poperechnyi, Maxim Artyomov, Alexey Sergushichev.
 
 Contact: alserg@itmo.ru
 
@@ -10,3 +10,4 @@ You can find source code of this site at <a href="https://github.com/ctlab/shiny
 
 Powered by R Shiny.
 
+Source code: https://github.com/ctlab/shinyGatom/.
