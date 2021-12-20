@@ -18,5 +18,5 @@ ShinyGATOM <- function(config_file=system.file('config.yml', package = 'ShinyGAT
     addResourcePath('/www',
                     system.file('www', package = 'ShinyGATOM'))
 
-    shinyApp(app_ui, app_server(config_file))
+    shinyApp(app_ui(config_file), app_server(config_file))
 }

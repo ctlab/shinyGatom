@@ -13,17 +13,11 @@ myMainPanel <- function(...) {
 }
 
 #' @import shinyCyJS
-app_ui <- function(request) {
+app_ui <- function(config_file) {
+  conf <- config::get(file=config_file, use_parent = FALSE)
+
+  function(request) {
     workPanel <- tagList(
-        fixedRow(
-            column(12,
-                   div(
-                       class="alert alert-info",
-                       role="alert",
-                       HTML('Like Shiny GATOM? Check out <a href="https://artyomovlab.wustl.edu/phantasus">Phantasus</a> where you can <a href="https://artyomovlab.wustl.edu/phantasus/phantasus-tutorial.html">do differential expression and submit the results to Shiny GATOM</a>')
-                   )
-            )
-        ),
         fixedRow(
             mySidebarPanel(
                 actionButton(
@@ -244,4 +238,5 @@ app_ui <- function(request) {
                 ))
         )
     )
+  }
 }

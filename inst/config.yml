@@ -1,41 +1,43 @@
 default:
-    example.gene.de.path: "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
-    example.met.de.path:  "http://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.met.de.tsv"
-    example.lip.de.path:  "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/ST27.lip.de.tsv"
-    
-    path.to.kegg.network:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds"
-    path.to.rhea.network:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.rhea.rds"
-    path.to.lipid.network:        "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.rhea.lipids.rds"
-    
-    path.to.met.kegg.db:          "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.kegg.db.rds"
-    path.to.met.rhea.db:          "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.rhea.db.rds"
-    path.to.met.lipid.db:         "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.lipids.db.rds"
-    
-    path.to.org.Mm.eg.gatom.anno: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds"
-    path.to.org.Hs.eg.gatom.anno: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Hs.eg.gatom.anno.rds"
-    
-    path.to.gene2reaction.rhea.hsa.eg: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.hsa.eg.tsv"
-    path.to.gene2reaction.rhea.mmu.eg: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.mmu.eg.tsv"
-    path.to.gene2reaction.rhea.ath.eg: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.ath.eg.tsv"
-    path.to.gene2reaction.rhea.sce.eg: "http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.sce.eg.tsv"
+    example.gene.de.path: "https://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
+    example.met.de.path:  "https://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.met.de.tsv"
+    example.lip.de.path:  "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/ST27.lip.de.tsv"
+
+    vizmap.url: "https://artyomovlab.wustl.edu/publications/supp_materials/GAM/GAM_VizMap.xml"
+
+    path.to.kegg.network:         "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds"
+    path.to.rhea.network:         "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.rhea.rds"
+    path.to.lipid.network:        "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.rhea.lipids.rds"
+
+    path.to.met.kegg.db:          "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.kegg.db.rds"
+    path.to.met.rhea.db:          "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.rhea.db.rds"
+    path.to.met.lipid.db:         "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.lipids.db.rds"
+
+    path.to.org.Mm.eg.gatom.anno: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds"
+    path.to.org.Hs.eg.gatom.anno: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Hs.eg.gatom.anno.rds"
+
+    path.to.gene2reaction.rhea.hsa.eg: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.hsa.eg.tsv"
+    path.to.gene2reaction.rhea.mmu.eg: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.mmu.eg.tsv"
+    path.to.gene2reaction.rhea.ath.eg: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.ath.eg.tsv"
+    path.to.gene2reaction.rhea.sce.eg: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.sce.eg.tsv"
 
 
 local:
     example.gene.de.path:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.gene.de.tsv")
     example.met.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.met.de.tsv")
     example.lip.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "ST27.lip.de.tsv")
-    
+
     path.to.kegg.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.kegg.rds")
     path.to.rhea.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.rhea.rds")
     path.to.lipid.network:        !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.rhea.lipids.rds")
-    
+
     path.to.met.kegg.db:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.kegg.db.rds")
     path.to.met.rhea.db:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.rhea.db.rds")
     path.to.met.lipid.db:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.lipids.db.rds")
-    
+
     path.to.org.Mm.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Mm.eg.gatom.anno.rds")
     path.to.org.Hs.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Hs.eg.gatom.anno.rds")
-    
+
     path.to.gene2reaction.rhea.hsa.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.hsa.eg.tsv")
     path.to.gene2reaction.rhea.mmu.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.mmu.eg.tsv")
     path.to.gene2reaction.rhea.ath.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.ath.eg.tsv")
