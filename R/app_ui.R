@@ -30,9 +30,9 @@ app_ui <- function(request) {
                     "resetInput", label="Reset all",
                     onclick=paste(
                         'resetFileInput("geneDE"); resetFileInput("metDE")',
-                        '$("#loadExampleGeneDE").attr("checked", false).trigger("change")',
-                        '$("#loadExampleMetDE").attr("checked", false).trigger("change")',
-                        '$("#loadExampleLipidDE").attr("checked", false).trigger("change")',
+                        '$("#loadExampleGeneDE").prop("checked", false).trigger("change")',
+                        '$("#loadExampleMetDE").prop("checked", false).trigger("change")',
+                        '$("#loadExampleLipidDE").prop("checked", false).trigger("change")',
                         '$("#preprocess").click(); $("#find").click()',
                         sep=";")
                 ),
