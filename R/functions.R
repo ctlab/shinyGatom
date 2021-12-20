@@ -3,7 +3,6 @@
 #     shinyjs::runjs("setTimeout(function(){cy.panzoom()},3500)")
 # }
 
-
 getJsTooltip <- function(attr.values) {
     attr.strings <- list()
     attr.names <- names(attr.values)
@@ -151,10 +150,11 @@ scoreGraphShiny <- function(g, k.gene, k.met,
 
 ############################################### NEW FUNCTIONS
 
-prepareForShinyCyJS <- function(module, layout=list(name = "cose")){
+prepareForShinyCyJS <- function(module, layout=list(name = "cose", animate = FALSE)){
     if (is.null(module)) {
-        nodes <- data.frame()
-        edges <- data.frame()
+        return(NULL)
+        # nodes <- data.frame()
+        # edges <- data.frame()
     } else {
         
         vertex.table <- as_data_frame(module, what="vertices")

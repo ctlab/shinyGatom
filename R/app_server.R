@@ -103,6 +103,9 @@ app_server <- function(config_file) {
             if (loadExample()){
                 res <- lazyReadRDS(annotations[["mmu"]],
                                    path=annotationPaths[["mmu"]])
+            } else if (input$loadExampleLipidDE) {
+                res <- lazyReadRDS(annotations[["mmu"]],
+                                   path=annotationPaths[["mmu"]])
             } else {
                 res <- lazyReadRDS(annotations[[input$organism]],
                                    path=annotationPaths[[input$organism]])
