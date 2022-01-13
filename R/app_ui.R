@@ -195,14 +195,6 @@ app_ui <- function(request) {
                              ),
                              myMainPanel(
                                  h3("Pathway annotation"),
-                                 tags$head(tags$style("#wentwrong{color: red;
-                                                                  font-size: 15px;
-                                                                  font-style: italic;
-                                                                  }"
-                                 )
-                                 ),
-                                 conditionalPanel("collapsePathways",
-                                                  textOutput("wentwrong")),
                                  uiOutput("pathwaysTable")
                              )
                          )
