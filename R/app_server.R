@@ -917,28 +917,13 @@ app_server <- function(config_file) {
             res <- foraRes[padj < 0.05]
             
             if (input$collapsePathways) {
-                if (length(res$pathway) > 5) {
                     mainPathways <- fgsea::collapsePathwaysORA(
                         res,
                         pathways=org.Mm.eg.gatom.anno$pathways,
                         genes=E(m)$gene,
                         universe=unique(E(g)$gene))
-                    output$wentwrong <- NULL
-                    
-                    if (sum(pathway %in% mainPathways$mainPathways) > 0) {
                         res <- foraRes[pathway %in% mainPathways$mainPathways]
-                        output$wentwrong <- NULL
-                        
-                    } else {
-                        output$wentwrong <- renderText("Pathway collapsion went wrong")
-                        }
-                } else {
-                    output$wentwrong <- renderText("Pathway collapsion went wrong")
-                }
-            } else {
-                output$wentwrong <- NULL
             }
-            
             format(as.data.frame(res), digits=3)
         })
         
