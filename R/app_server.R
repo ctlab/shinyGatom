@@ -1,6 +1,7 @@
 #' @import mwcsr
 #' @import data.table
 #' @import logging
+#' @import readxl
 app_server <- function(config_file) {
 
     conf <- config::get(file=config_file, use_parent = FALSE)
@@ -118,7 +119,7 @@ app_server <- function(config_file) {
         geneDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleGeneDE) {
-                    example.gene.de <- force(fread(conf$example.gene.de.path, colClasses="character"))
+                    example.gene.de <- force(fread(conf$example.gene.de.path))
                     attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
                     return(example.gene.de)
                 }
@@ -151,8 +152,12 @@ app_server <- function(config_file) {
                 # User has not uploaded a file yet and we don't have a key
                 return(NULL)
             }
-
-            res <- fread(path, colClasses="character")
+            
+            if (grepl("xlsx?$", input$geneDE$name)){
+                res <- read_excel(path)
+            } else {
+                res <- fread(path)
+            }
             attr(res, "name") <- deName
 
             res
@@ -175,12 +180,15 @@ app_server <- function(config_file) {
             logdebug(capture.output(str(res)))
             if (!all(necessary.gene.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$geneDE$datapath)
-                if (grepl("xlsx?$", input$geneDE$name)) {
-                    stop("We do not support excel files yet, please, use tab-separated files instead")
-                } else{
-                    stop(paste0("Genomic differential expression data should contain at least these fields: ",
-                                paste(necessary.gene.de.fields, collapse=", ")))
-                }
+                stop(paste0("Genomic differential expression data should contain at least these fields: ",
+                            paste(necessary.gene.de.fields, collapse=", ")))
+                
+                # if (grepl("xlsx?$", input$geneDE$name)) {
+                #     stop("We do not support excel files yet, please, use tab-separated files instead")
+                # } else{
+                #     stop(paste0("Genomic differential expression data should contain at least these fields: ",
+                #                 paste(necessary.gene.de.fields, collapse=", ")))
+                # }
             }
 
             attr(res, "name") <- attr(gene.de.raw, "name")
@@ -245,7 +253,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
 
-            notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]]$RefSeq)
+            notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
             notMapped
         })
 
@@ -296,7 +304,7 @@ app_server <- function(config_file) {
         metDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleMetDE) {
-                    example.met.de <- force(fread(conf$example.met.de.path, colClasses="character"))
+                    example.met.de <- force(fread(conf$example.met.de.path))
                     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
                     return(example.met.de)
                 }
@@ -304,7 +312,7 @@ app_server <- function(config_file) {
             }
 
             if (input$loadExampleLipidDE){
-                example.lip.de <- force(fread(conf$example.lip.de.path, colClasses="character"))
+                example.lip.de <- force(fread(conf$example.lip.de.path))
                 attr(example.lip.de, "name") <- basename(conf$example.lip.de.path)
                 return(example.lip.de)
             }
@@ -322,8 +330,12 @@ app_server <- function(config_file) {
             loginfo(capture.output(str(input$metDE)))
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
-
-            res <- fread(input$metDE$datapath, colClasses="character")
+            
+            if (grepl("xlsx?$", input$metDE$name)){
+                res <- read_excel(input$metDE$datapath)
+            } else {
+                res <- fread(input$metDE$datapath)
+            }
             attr(res, "name") <- input$metDE$name
 
             res
@@ -356,12 +368,14 @@ app_server <- function(config_file) {
             logdebug(capture.output(str(res)))
             if (!all(necessary.met.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$metDE$datapath)
-                if (grepl("xlsx?$", input$metDE$name)) {
-                    stop("We do not support excel files yet, please, use tab-separated files instead")
-                } else {
-                    stop(paste0("Metabolic differential expression data should contain at least these fields: ",
-                                paste(necessary.met.de.fields, collapse=", ")))
-                }
+                stop(paste0("Metabolic differential expression data should contain at least these fields: ",
+                            paste(necessary.met.de.fields, collapse=", ")))
+                # if (grepl("xlsx?$", input$metDE$name)) {
+                #     stop("We do not support excel files yet, please, use tab-separated files instead")
+                # } else {
+                #     stop(paste0("Metabolic differential expression data should contain at least these fields: ",
+                #                 paste(necessary.met.de.fields, collapse=", ")))
+                # }
             }
 
             attr(res, "name") <- attr(met.de.raw, "name")
@@ -559,9 +573,9 @@ app_server <- function(config_file) {
                     met.db <- met.lipid.db
 
                     if (isolate(input$loadExampleLipidDE)) {
-                        gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]], colClasses="character"))[gene != "-"]
+                        gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]]))[gene != "-"]
                     } else {
-                        gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]], colClasses="character"))[gene != "-"]
+                        gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]]))[gene != "-"]
                     }
 
                     topology <- "metabolites"

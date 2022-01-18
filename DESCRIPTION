@@ -22,5 +22,5 @@ Imports:
     shiny,
     shinyCyJS,
     config,
-    gatom
-
+    gatom,
+    readxl
