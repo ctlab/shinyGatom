@@ -156,7 +156,7 @@ app_server <- function(config_file) {
             if (grepl("xlsx?$", input$geneDE$name)){
                 res <- read_excel(path)
             } else {
-                res <- fread(path)
+                res <- fread(path, colClasses="character")
             }
             attr(res, "name") <- deName
 
@@ -304,7 +304,7 @@ app_server <- function(config_file) {
         metDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleMetDE) {
-                    example.met.de <- force(fread(conf$example.met.de.path))
+                    example.met.de <- force(fread(conf$example.met.de.path, colClasses="character"))
                     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
                     return(example.met.de)
                 }
@@ -312,7 +312,7 @@ app_server <- function(config_file) {
             }
 
             if (input$loadExampleLipidDE){
-                example.lip.de <- force(fread(conf$example.lip.de.path))
+                example.lip.de <- force(fread(conf$example.lip.de.path, colClasses="character"))
                 attr(example.lip.de, "name") <- basename(conf$example.lip.de.path)
                 return(example.lip.de)
             }
@@ -334,7 +334,7 @@ app_server <- function(config_file) {
             if (grepl("xlsx?$", input$metDE$name)){
                 res <- read_excel(input$metDE$datapath)
             } else {
-                res <- fread(input$metDE$datapath)
+                res <- fread(input$metDE$datapath, colClasses="character")
             }
             attr(res, "name") <- input$metDE$name
 
@@ -573,9 +573,9 @@ app_server <- function(config_file) {
                     met.db <- met.lipid.db
 
                     if (isolate(input$loadExampleLipidDE)) {
-                        gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]]))[gene != "-"]
+                        gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]], colClasses="character"))[gene != "-"]
                     } else {
-                        gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]]))[gene != "-"]
+                        gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]], colClasses="character"))[gene != "-"]
                     }
 
                     topology <- "metabolites"
@@ -589,7 +589,7 @@ app_server <- function(config_file) {
                                                path = conf$path.to.met.rhea.db)
                     met.db <- met.rhea.db
                 }
-
+                
                 g <- makeMetabolicGraph(network=network,
                                         topology=topology,
                                         org.gatom.anno=org.gatom.anno,
