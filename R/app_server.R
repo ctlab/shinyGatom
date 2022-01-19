@@ -250,7 +250,8 @@ app_server <- function(config_file) {
             }
 
             if (geneIT == org.gatom.anno$baseId) {
-                return(NULL)
+                notMapped <- setdiff(data$ID, org.gatom.anno$genes$gene)
+                return(notMapped)
             }
 
             notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
@@ -285,6 +286,20 @@ app_server <- function(config_file) {
                     )
                 } else NULL)
         })
+        
+        # NotMappedGeneData = reactiveValues({
+        #     data <- geneDEInput()
+        #     if (is.null(data)) {
+        #         return(data.table)
+        #     }
+        #     notMapped <- notMappedGenes()
+        #     if (length(notMapped) == 0) {
+        #         return(data.table)
+        #     }
+        #     data <- data[order(pval)]
+        #     res <- data[ID %in% notMapped]
+        #     res
+        # })
 
         output$geneDENotMappedTable <- renderTable({
             data <- geneDEInput()
@@ -297,8 +312,9 @@ app_server <- function(config_file) {
             }
 
             data <- data[order(pval)]
-            data <- data[ID %in% notMapped]
-            format(as.data.frame(head(data, n=20)), digits=3)
+            not.mapped.data <- data[ID %in% notMapped]
+            # not.mapped.data <- NotMappedGeneData()
+            format(as.data.frame(head(not.mapped.data, n=20)), digits=3)
         })
 
         metDEInputRaw <- reactive({
@@ -438,6 +454,7 @@ app_server <- function(config_file) {
         })
 
         notMappedMets <- reactive({
+            data <- metDEInput()
 
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
@@ -460,10 +477,11 @@ app_server <- function(config_file) {
             }
 
             if (metIT == met.db$baseId) {
-                return(NULL)
+                notMapped <- setdiff(data$ID, met.db$metabolites$metabolite)
+                return(notMapped)
             }
 
-            notMapped <- setdiff(metDEInput()$ID, met.db$mapFrom[[metIT]][[metIT]])
+            notMapped <- setdiff(data$ID, met.db$mapFrom[[metIT]][[metIT]])
             notMapped
         })
 
