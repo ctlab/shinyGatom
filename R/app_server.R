@@ -624,6 +624,7 @@ app_server <- function(config_file) {
                 }
 
                 attr(g, "tag") <- tag
+                g$organism <- isolate(input$organism)
                 g
             }, finally=longProcessStop())
         })
@@ -934,9 +935,9 @@ app_server <- function(config_file) {
         # afterCall()
 
         output$downloadNetwork <- downloadHandler(
-            filename = reactive({ paste0("network.", tolower(gInput()$network$organism), ".xgmml") }),
+            filename = reactive({ paste0("network.", tolower(gInput()$organism), ".xgmml")}),
             content = function(file) {
-                saveModuleToXgmml(gInput()$subnet, file=file, name=tolower(gInput()$network$organism))
+                saveModuleToXgmml(gInput(), file=file, name=tolower(gInput()$organism))
             })
 
         output$downloadModule <- downloadHandler(
