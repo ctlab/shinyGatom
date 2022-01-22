@@ -572,13 +572,13 @@ app_server <- function(config_file) {
             longProcessStart()
 
             tryCatch({
-                if (!is.null(gene.de)) {
-                    gene.de <- gene.de[which(gene.de$pval < 1), ]
-                }
+                # if (!is.null(gene.de)) {
+                #     gene.de <- gene.de[which(gene.de$pval < 1), ]
+                # }
 
-                if (!is.null(met.de)) {
-                    met.de <- met.de[which(met.de$pval < 1), ]
-                }
+                # if (!is.null(met.de)) {
+                #     met.de <- met.de[which(met.de$pval < 1), ]
+                # }
 
                 topology <- isolate(input$nodesAs)
                 org.gatom.anno <- getAnnotation()
