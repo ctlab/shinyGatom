@@ -40,7 +40,7 @@ getJsEdgeStyleAttributes <- function(attrs) {
         label=if (!is.null(attrs$label)) label else "",
         lineStyle="solid",
         fontSize=sapply(logPval, gatom:::getDotSize) * 25,
-        lineColor=if (!is.null(attrs$log2FC)) sapply(log2FC, gatom:::getDotColor) else "grey",
+        lineColor=if (!is.null(attrs$log2FC)) sapply(as.numeric(log2FC), gatom:::getDotColor) else "grey",
         tooltip=getJsTooltip(attrs)
     ))
 }

@@ -1,6 +1,7 @@
 #' @import mwcsr
 #' @import data.table
 #' @import logging
+#' @import readxl
 app_server <- function(config_file) {
 
     conf <- config::get(file=config_file, use_parent = FALSE)
@@ -118,7 +119,7 @@ app_server <- function(config_file) {
         geneDEInputRaw <- reactive({
             if (loadExample()) {
                 if (input$loadExampleGeneDE) {
-                    example.gene.de <- force(fread(conf$example.gene.de.path, colClasses="character"))
+                    example.gene.de <- force(fread(conf$example.gene.de.path))
                     attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
                     return(example.gene.de)
                 }
@@ -151,8 +152,12 @@ app_server <- function(config_file) {
                 # User has not uploaded a file yet and we don't have a key
                 return(NULL)
             }
-
-            res <- fread(path, colClasses="character")
+            
+            if (grepl("xlsx?$", input$geneDE$name)){
+                res <- read_excel(path)
+            } else {
+                res <- fread(path, colClasses="character")
+            }
             attr(res, "name") <- deName
 
             res
@@ -175,12 +180,15 @@ app_server <- function(config_file) {
             logdebug(capture.output(str(res)))
             if (!all(necessary.gene.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$geneDE$datapath)
-                if (grepl("xlsx?$", input$geneDE$name)) {
-                    stop("We do not support excel files yet, please, use tab-separated files instead")
-                } else{
-                    stop(paste0("Genomic differential expression data should contain at least these fields: ",
-                                paste(necessary.gene.de.fields, collapse=", ")))
-                }
+                stop(paste0("Genomic differential expression data should contain at least these fields: ",
+                            paste(necessary.gene.de.fields, collapse=", ")))
+                
+                # if (grepl("xlsx?$", input$geneDE$name)) {
+                #     stop("We do not support excel files yet, please, use tab-separated files instead")
+                # } else{
+                #     stop(paste0("Genomic differential expression data should contain at least these fields: ",
+                #                 paste(necessary.gene.de.fields, collapse=", ")))
+                # }
             }
 
             attr(res, "name") <- attr(gene.de.raw, "name")
@@ -242,10 +250,11 @@ app_server <- function(config_file) {
             }
 
             if (geneIT == org.gatom.anno$baseId) {
-                return(NULL)
+                notMapped <- setdiff(data$ID, org.gatom.anno$genes$gene)
+                return(notMapped)
             }
 
-            notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]]$RefSeq)
+            notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
             notMapped
         })
 
@@ -277,6 +286,20 @@ app_server <- function(config_file) {
                     )
                 } else NULL)
         })
+        
+        # NotMappedGeneData = reactiveValues({
+        #     data <- geneDEInput()
+        #     if (is.null(data)) {
+        #         return(data.table)
+        #     }
+        #     notMapped <- notMappedGenes()
+        #     if (length(notMapped) == 0) {
+        #         return(data.table)
+        #     }
+        #     data <- data[order(pval)]
+        #     res <- data[ID %in% notMapped]
+        #     res
+        # })
 
         output$geneDENotMappedTable <- renderTable({
             data <- geneDEInput()
@@ -289,8 +312,9 @@ app_server <- function(config_file) {
             }
 
             data <- data[order(pval)]
-            data <- data[ID %in% notMapped]
-            format(as.data.frame(head(data, n=20)), digits=3)
+            not.mapped.data <- data[ID %in% notMapped]
+            # not.mapped.data <- NotMappedGeneData()
+            format(as.data.frame(head(not.mapped.data, n=20)), digits=3)
         })
 
         metDEInputRaw <- reactive({
@@ -322,8 +346,12 @@ app_server <- function(config_file) {
             loginfo(capture.output(str(input$metDE)))
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
-
-            res <- fread(input$metDE$datapath, colClasses="character")
+            
+            if (grepl("xlsx?$", input$metDE$name)){
+                res <- read_excel(input$metDE$datapath)
+            } else {
+                res <- fread(input$metDE$datapath, colClasses="character")
+            }
             attr(res, "name") <- input$metDE$name
 
             res
@@ -356,12 +384,14 @@ app_server <- function(config_file) {
             logdebug(capture.output(str(res)))
             if (!all(necessary.met.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$metDE$datapath)
-                if (grepl("xlsx?$", input$metDE$name)) {
-                    stop("We do not support excel files yet, please, use tab-separated files instead")
-                } else {
-                    stop(paste0("Metabolic differential expression data should contain at least these fields: ",
-                                paste(necessary.met.de.fields, collapse=", ")))
-                }
+                stop(paste0("Metabolic differential expression data should contain at least these fields: ",
+                            paste(necessary.met.de.fields, collapse=", ")))
+                # if (grepl("xlsx?$", input$metDE$name)) {
+                #     stop("We do not support excel files yet, please, use tab-separated files instead")
+                # } else {
+                #     stop(paste0("Metabolic differential expression data should contain at least these fields: ",
+                #                 paste(necessary.met.de.fields, collapse=", ")))
+                # }
             }
 
             attr(res, "name") <- attr(met.de.raw, "name")
@@ -424,6 +454,7 @@ app_server <- function(config_file) {
         })
 
         notMappedMets <- reactive({
+            data <- metDEInput()
 
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
@@ -446,10 +477,11 @@ app_server <- function(config_file) {
             }
 
             if (metIT == met.db$baseId) {
-                return(NULL)
+                notMapped <- setdiff(data$ID, met.db$metabolites$metabolite)
+                return(notMapped)
             }
 
-            notMapped <- setdiff(metDEInput()$ID, met.db$mapFrom[[metIT]][[metIT]])
+            notMapped <- setdiff(data$ID, met.db$mapFrom[[metIT]][[metIT]])
             notMapped
         })
 
@@ -575,7 +607,7 @@ app_server <- function(config_file) {
                                                path = conf$path.to.met.rhea.db)
                     met.db <- met.rhea.db
                 }
-
+                
                 g <- makeMetabolicGraph(network=network,
                                         topology=topology,
                                         org.gatom.anno=org.gatom.anno,
