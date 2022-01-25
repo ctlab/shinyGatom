@@ -23,4 +23,5 @@ Imports:
     shinyCyJS,
     config,
     gatom,
-    readxl
+    readxl,
+    openxlsx

@@ -194,7 +194,8 @@ app_ui <- function(config_file) {
 				var blob = new Blob([svgContent], {type:"image/svg+xml;charset=utf-8"});\
 				saveAs(blob, "module.svg");',
                                      icon=shiny::icon("download")),
-                                 downloadButton("downloadModule", "XGMML")
+                                 downloadButton("downloadModule", "XGMML"),
+                                 downloadButton("downloadXlsx", "XLSX")
                 ),
                 div(id="legend",
                     p(),

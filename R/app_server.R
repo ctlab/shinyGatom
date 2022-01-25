@@ -2,6 +2,7 @@
 #' @import data.table
 #' @import logging
 #' @import readxl
+#' @import openxlsx
 app_server <- function(config_file) {
 
     conf <- config::get(file=config_file, use_parent = FALSE)
@@ -981,6 +982,36 @@ app_server <- function(config_file) {
                                df), stderr=NULL)
             res
         })
+        
+        output$downloadXlsx <- downloadHandler(
+            filename = reactive({ paste0(moduleInput()$description.string, ".xlsx") }),
+            content = function(file) {
+                module <- moduleInput()
+                g <- isolate(gScoredInput())
+                
+                stopifnot(require(openxlsx))
+                
+                wb <- createWorkbook()
+                
+                metTable <- data.table(as_data_frame(g, what="vertices"))
+                rxnTable <- data.table(as_data_frame(g, what="edges"))
+                
+                # metTable <- removeNAColumns(metTable)
+                # rxnTable <- removeNAColumns(rxnTable)
+                
+                # addDataFrame(metTable, createSheet(wb, "metabolites"), row.names=F)
+                addWorksheet(wb, "metabolites")
+                writeData(wb, "metabolites", metTable, row.names=F)
+                
+                # addDataFrame(rxnTable, createSheet(wb, "reactions"), row.names=F)
+                addWorksheet(wb, "reactions")
+                writeData(wb, "reactions", rxnTable, row.names=F)
+                
+                metInModule <- metTable$name
+                geneInModule <- rxnTable$gene
+                
+                saveWorkbook(wb, file)
+            })
 
         output$downloadPDF <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".pdf") }),
