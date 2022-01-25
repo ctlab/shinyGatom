@@ -174,12 +174,14 @@ app_ui <- function(config_file) {
                                      checkboxInput("addHighlyExpressedEdges",
                                                    label="Add highly expressed genes",
                                                    value=FALSE),
-                                     selectInput("metaboliteActions",
-                                                 label="Actions with atoms",
-                                                 c("Connect atoms inside metabolite"="connectAtomsInsideMetabolite",
-                                                   "Collapse atoms into metabolites"="collapseAtomsIntoMetabolites",
-                                                   "None" = "NoAction"),
-                                                 selected="NoAction")
+                                     conditionalPanel("(input.nodesAs == 'atoms') || (!input.loadExampleLipidDE) || (input.network != 'lipidomic')",
+                                                      selectInput("metaboliteActions",
+                                                                  label="Actions with atoms",
+                                                                  c("Connect atoms inside metabolite"="connectAtomsInsideMetabolite",
+                                                                    "Collapse atoms into metabolites"="collapseAtomsIntoMetabolites",
+                                                                    "None" = "NoAction"),
+                                                                  selected="NoAction")
+                                     )
                     )
                 ),
                 conditionalPanel("module.available",
