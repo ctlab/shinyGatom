@@ -23,16 +23,16 @@ app_server <- function(config_file) {
 
         annotations <- list(
             "mmu" = "org.Mm.eg.gatom.anno",
-            "hsa" = "org.Hs.eg.gatom.anno"
-            # "ath" = "ath",
-            # "sce" = "sce"
+            "hsa" = "org.Hs.eg.gatom.anno",
+            "ath" = "org.At.tair.gatom.anno",
+            "sce" = "org.Sc.sgd.gatom.anno"
         )
 
         annotationPaths <- list(
             "mmu" = conf$path.to.org.Mm.eg.gatom.anno,
-            "hsa" = conf$path.to.org.Hs.eg.gatom.anno
-            # "ath"="ath",
-            # "sce"="sce"
+            "hsa" = conf$path.to.org.Hs.eg.gatom.anno,
+            "ath" = conf$path.to.org.At.tair.gatom.anno,
+            "sce" = conf$path.to.org.Sc.sgd.gatom.anno
         )
 
         annotationsRhea <- list(

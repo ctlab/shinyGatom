@@ -50,10 +50,9 @@ app_ui <- function(config_file) {
                     selectInput("organism",
                                 label="Select an organism",
                                 choices=c("Mouse"="mmu",
-                                          "Human"="hsa"
-                                          # ,
-                                          # "Arabidopsis"="ath",
-                                          # "Yeast"="sce"
+                                          "Human"="hsa",
+                                          "Arabidopsis"="ath",
+                                          "Yeast"="sce"
                                           ),
                                 selected="mmu"
                     ),
@@ -174,7 +173,7 @@ app_ui <- function(config_file) {
                                      checkboxInput("addHighlyExpressedEdges",
                                                    label="Add highly expressed genes",
                                                    value=FALSE),
-                                     conditionalPanel("(input.nodesAs == 'atoms') || (!input.loadExampleLipidDE) || (input.network != 'lipidomic')",
+                                     conditionalPanel("(input.nodesAs == 'atoms') * (!input.loadExampleLipidDE) * (input.network != 'lipidomic')",
                                                       selectInput("metaboliteActions",
                                                                   label="Actions with atoms",
                                                                   c("Connect atoms inside metabolite"="connectAtomsInsideMetabolite",
