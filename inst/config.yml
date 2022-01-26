@@ -37,7 +37,9 @@ local:
 
     path.to.org.Mm.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Mm.eg.gatom.anno.rds")
     path.to.org.Hs.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Hs.eg.gatom.anno.rds")
-
+    path.to.org.At.tair.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.At.tair.gatom.anno.rds")
+    path.to.org.Sc.sgd.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Sc.sgd.gatom.anno.rds")
+    
     path.to.gene2reaction.rhea.hsa.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.hsa.eg.tsv")
     path.to.gene2reaction.rhea.mmu.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.mmu.eg.tsv")
     path.to.gene2reaction.rhea.ath.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.ath.eg.tsv")
