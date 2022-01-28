@@ -1,7 +1,6 @@
 #' @import mwcsr
 #' @import data.table
 #' @import logging
-#' @import readxl
 #' @import openxlsx
 app_server <- function(config_file) {
 
@@ -155,7 +154,7 @@ app_server <- function(config_file) {
             }
             
             if (grepl("xlsx?$", input$geneDE$name)){
-                res <- read_excel(path)
+                res <- read.xlsx(path)
             } else {
                 res <- fread(path, colClasses="character")
             }
@@ -349,7 +348,7 @@ app_server <- function(config_file) {
             loginfo("     from file: %s", input$metDE$datapath)
             
             if (grepl("xlsx?$", input$metDE$name)){
-                res <- read_excel(input$metDE$datapath)
+                res <- read.xlsx(input$metDE$datapath)
             } else {
                 res <- fread(input$metDE$datapath, colClasses="character")
             }
