@@ -243,18 +243,42 @@ app_server <- function(config_file) {
         notMappedGenes <- reactive({
             org.gatom.anno <- getAnnotation()
             geneIT <- geneIdsType()
-            data <- geneDEInput()
+            gene.de <- geneDEInput()
 
             if (is.null(geneIT)) {
                 return(NULL)
             }
-
-            if (geneIT == org.gatom.anno$baseId) {
-                notMapped <- setdiff(data$ID, org.gatom.anno$genes$gene)
-                return(notMapped)
+            
+            gene.de.meta <- getGeneDEMeta(gene.de, org.gatom.anno)
+            data <- prepareDE(gene.de, gene.de.meta)
+            data$initialID <- data$ID
+            
+            split <- " */// *"
+            
+            if (length(split) != 0) {
+                newIds <- gatom:::splitIds(data[["ID"]])
+                if (any(lengths(newIds) != 1)) {
+                    data.new <- data[rep(seq_len(nrow(data)), 
+                                         lengths(newIds))]
+                    data.new[, `:=`(c("ID"), unlist(newIds))]
+                    data <- data.new
+                }
             }
 
-            notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
+            if (geneIT == org.gatom.anno$baseId) {
+                notMappedIDs <- setdiff(data$ID, org.gatom.anno$genes$gene)
+            } else {
+                notMappedIDs <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
+            }
+            
+            data.new <- data[!(data$ID %in% notMappedIDs)]
+            data.new <- data.new[ , -"ID"]
+            data.new <- data.new[!duplicated(data.new), ]
+            
+            data <- data[ , -"ID"]
+            notMappedDT <- data[!(data$initialID %in% data.new$initialID)]
+            notMapped <- notMappedDT$initialID
+            
             notMapped
         })
 
@@ -454,7 +478,7 @@ app_server <- function(config_file) {
         })
 
         notMappedMets <- reactive({
-            data <- metDEInput()
+            met.de <- metDEInput()
 
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
@@ -475,13 +499,38 @@ app_server <- function(config_file) {
             if (is.null(metIT)) {
                 return(NULL)
             }
-
-            if (metIT == met.db$baseId) {
-                notMapped <- setdiff(data$ID, met.db$metabolites$metabolite)
-                return(notMapped)
+            
+            meta.met.de <- getMetDEMeta(met.de, met.db=met.db)
+            data <- gatom:::prepareDE(met.de, meta.met.de)
+            data$initialID <- data$ID
+            
+            split <- " */// *"
+            
+            if (length(split) != 0) {
+                newIds <- gatom:::splitIds(data[["ID"]])
+                if (any(lengths(newIds) != 1)) {
+                    data.new <- data[rep(seq_len(nrow(data)), 
+                                         lengths(newIds))]
+                    data.new[, `:=`(c("ID"), unlist(newIds))]
+                    data <- data.new
+                }
             }
-
-            notMapped <- setdiff(data$ID, met.db$mapFrom[[metIT]][[metIT]])
+            
+            if (metIT == met.db$baseId) {
+                notMappedIDs <- setdiff(data$ID, met.db$metabolites$metabolite)
+            } else {
+                notMappedIDs <- setdiff(data$ID, met.db$mapFrom[[metIT]][[metIT]])
+            }
+            
+            data.new <- data[!(data$ID %in% notMappedIDs)]
+            data.new <- data.new[ , -"ID"]
+            
+            data.new <- data.new[!duplicated(data.new), ]
+            
+            data <- data[ , -"ID"]
+            notMappedDT <- data[!(data$initialID %in% data.new$initialID)]
+            notMapped <- notMappedDT$initialID
+            
             notMapped
         })
 
