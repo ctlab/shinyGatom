@@ -13,8 +13,10 @@ default:
     path.to.met.rhea.db:          "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.rhea.db.rds"
     path.to.met.lipid.db:         "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.lipids.db.rds"
 
-    path.to.org.Mm.eg.gatom.anno: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds"
-    path.to.org.Hs.eg.gatom.anno: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Hs.eg.gatom.anno.rds"
+    path.to.org.Mm.eg.gatom.anno:   "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds"
+    path.to.org.Hs.eg.gatom.anno:   "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Hs.eg.gatom.anno.rds"
+    path.to.org.At.tair.gatom.anno: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.At.tair.gatom.anno.rds"
+    path.to.org.Sc.sgd.gatom.anno:  "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Sc.sgd.gatom.anno.rds"
 
     path.to.gene2reaction.rhea.hsa.eg: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.hsa.eg.tsv"
     path.to.gene2reaction.rhea.mmu.eg: "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.rhea.mmu.eg.tsv"
@@ -35,9 +37,11 @@ local:
     path.to.met.rhea.db:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.rhea.db.rds")
     path.to.met.lipid.db:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "met.lipids.db.rds")
 
-    path.to.org.Mm.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Mm.eg.gatom.anno.rds")
-    path.to.org.Hs.eg.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Hs.eg.gatom.anno.rds")
-
+    path.to.org.Mm.eg.gatom.anno:   !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Mm.eg.gatom.anno.rds")
+    path.to.org.Hs.eg.gatom.anno:   !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Hs.eg.gatom.anno.rds")
+    path.to.org.At.tair.gatom.anno: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.At.tair.gatom.anno.rds")
+    path.to.org.Sc.sgd.gatom.anno:  !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "org.Sc.sgd.gatom.anno.rds")
+    
     path.to.gene2reaction.rhea.hsa.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.hsa.eg.tsv")
     path.to.gene2reaction.rhea.mmu.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.mmu.eg.tsv")
     path.to.gene2reaction.rhea.ath.eg: !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "gene2reaction.rhea.ath.eg.tsv")

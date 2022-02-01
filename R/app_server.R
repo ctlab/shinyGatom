@@ -1,7 +1,7 @@
 #' @import mwcsr
 #' @import data.table
 #' @import logging
-#' @import readxl
+#' @import openxlsx
 app_server <- function(config_file) {
 
     conf <- config::get(file=config_file, use_parent = FALSE)
@@ -22,16 +22,16 @@ app_server <- function(config_file) {
 
         annotations <- list(
             "mmu" = "org.Mm.eg.gatom.anno",
-            "hsa" = "org.Hs.eg.gatom.anno"
-            # "ath" = "ath",
-            # "sce" = "sce"
+            "hsa" = "org.Hs.eg.gatom.anno",
+            "ath" = "org.At.tair.gatom.anno",
+            "sce" = "org.Sc.sgd.gatom.anno"
         )
 
         annotationPaths <- list(
             "mmu" = conf$path.to.org.Mm.eg.gatom.anno,
-            "hsa" = conf$path.to.org.Hs.eg.gatom.anno
-            # "ath"="ath",
-            # "sce"="sce"
+            "hsa" = conf$path.to.org.Hs.eg.gatom.anno,
+            "ath" = conf$path.to.org.At.tair.gatom.anno,
+            "sce" = conf$path.to.org.Sc.sgd.gatom.anno
         )
 
         annotationsRhea <- list(
@@ -154,7 +154,7 @@ app_server <- function(config_file) {
             }
 
             if (grepl("xlsx?$", input$geneDE$name)){
-                res <- read_excel(path)
+                res <- read.xlsx(path)
             } else {
                 res <- fread(path, colClasses="character")
             }
@@ -243,18 +243,42 @@ app_server <- function(config_file) {
         notMappedGenes <- reactive({
             org.gatom.anno <- getAnnotation()
             geneIT <- geneIdsType()
-            data <- geneDEInput()
+            gene.de <- geneDEInput()
 
             if (is.null(geneIT)) {
                 return(NULL)
             }
-
-            if (geneIT == org.gatom.anno$baseId) {
-                notMapped <- setdiff(data$ID, org.gatom.anno$genes$gene)
-                return(notMapped)
+            
+            gene.de.meta <- getGeneDEMeta(gene.de, org.gatom.anno)
+            data <- prepareDE(gene.de, gene.de.meta)
+            data$initialID <- data$ID
+            
+            split <- " */// *"
+            
+            if (length(split) != 0) {
+                newIds <- gatom:::splitIds(data[["ID"]])
+                if (any(lengths(newIds) != 1)) {
+                    data.new <- data[rep(seq_len(nrow(data)), 
+                                         lengths(newIds))]
+                    data.new[, `:=`(c("ID"), unlist(newIds))]
+                    data <- data.new
+                }
             }
 
-            notMapped <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
+            if (geneIT == org.gatom.anno$baseId) {
+                notMappedIDs <- setdiff(data$ID, org.gatom.anno$genes$gene)
+            } else {
+                notMappedIDs <- setdiff(data$ID, org.gatom.anno$mapFrom[[geneIT]][[geneIT]])
+            }
+            
+            data.new <- data[!(data$ID %in% notMappedIDs)]
+            data.new <- data.new[ , -"ID"]
+            data.new <- data.new[!duplicated(data.new), ]
+            
+            data <- data[ , -"ID"]
+            notMappedDT <- data[!(data$initialID %in% data.new$initialID)]
+            notMapped <- notMappedDT$initialID
+            
             notMapped
         })
 
@@ -349,7 +373,7 @@ app_server <- function(config_file) {
             loginfo("     from file: %s", input$metDE$datapath)
 
             if (grepl("xlsx?$", input$metDE$name)){
-                res <- read_excel(input$metDE$datapath)
+                res <- read.xlsx(input$metDE$datapath)
             } else {
                 res <- fread(input$metDE$datapath, colClasses="character")
             }
@@ -455,7 +479,7 @@ app_server <- function(config_file) {
         })
 
         notMappedMets <- reactive({
-            data <- metDEInput()
+            met.de <- metDEInput()
 
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
@@ -476,13 +500,38 @@ app_server <- function(config_file) {
             if (is.null(metIT)) {
                 return(NULL)
             }
-
-            if (metIT == met.db$baseId) {
-                notMapped <- setdiff(data$ID, met.db$metabolites$metabolite)
-                return(notMapped)
+            
+            meta.met.de <- getMetDEMeta(met.de, met.db=met.db)
+            data <- gatom:::prepareDE(met.de, meta.met.de)
+            data$initialID <- data$ID
+            
+            split <- " */// *"
+            
+            if (length(split) != 0) {
+                newIds <- gatom:::splitIds(data[["ID"]])
+                if (any(lengths(newIds) != 1)) {
+                    data.new <- data[rep(seq_len(nrow(data)), 
+                                         lengths(newIds))]
+                    data.new[, `:=`(c("ID"), unlist(newIds))]
+                    data <- data.new
+                }
             }
-
-            notMapped <- setdiff(data$ID, met.db$mapFrom[[metIT]][[metIT]])
+            
+            if (metIT == met.db$baseId) {
+                notMappedIDs <- setdiff(data$ID, met.db$metabolites$metabolite)
+            } else {
+                notMappedIDs <- setdiff(data$ID, met.db$mapFrom[[metIT]][[metIT]])
+            }
+            
+            data.new <- data[!(data$ID %in% notMappedIDs)]
+            data.new <- data.new[ , -"ID"]
+            
+            data.new <- data.new[!duplicated(data.new), ]
+            
+            data <- data[ , -"ID"]
+            notMappedDT <- data[!(data$initialID %in% data.new$initialID)]
+            notMapped <- notMappedDT$initialID
+            
             notMapped
         })
 
@@ -983,6 +1032,36 @@ app_server <- function(config_file) {
                                df), stderr=NULL)
             res
         })
+        
+        output$downloadXlsx <- downloadHandler(
+            filename = reactive({ paste0(moduleInput()$description.string, ".xlsx") }),
+            content = function(file) {
+                module <- moduleInput()
+                g <- isolate(gScoredInput())
+                
+                stopifnot(require(openxlsx))
+                
+                wb <- createWorkbook()
+                
+                metTable <- data.table(as_data_frame(g, what="vertices"))
+                rxnTable <- data.table(as_data_frame(g, what="edges"))
+                
+                # metTable <- removeNAColumns(metTable)
+                # rxnTable <- removeNAColumns(rxnTable)
+                
+                # addDataFrame(metTable, createSheet(wb, "metabolites"), row.names=F)
+                addWorksheet(wb, "metabolites")
+                writeData(wb, "metabolites", metTable, row.names=F)
+                
+                # addDataFrame(rxnTable, createSheet(wb, "reactions"), row.names=F)
+                addWorksheet(wb, "reactions")
+                writeData(wb, "reactions", rxnTable, row.names=F)
+                
+                metInModule <- metTable$name
+                geneInModule <- rxnTable$gene
+                
+                saveWorkbook(wb, file)
+            })
 
         output$downloadPDF <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".pdf") }),

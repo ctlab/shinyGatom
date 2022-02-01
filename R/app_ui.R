@@ -50,10 +50,9 @@ app_ui <- function(config_file) {
                     selectInput("organism",
                                 label="Select an organism",
                                 choices=c("Mouse"="mmu",
-                                          "Human"="hsa"
-                                          # ,
-                                          # "Arabidopsis"="ath",
-                                          # "Yeast"="sce"
+                                          "Human"="hsa",
+                                          "Arabidopsis"="ath",
+                                          "Yeast"="sce"
                                           ),
                                 selected="mmu"
                     ),
@@ -174,12 +173,14 @@ app_ui <- function(config_file) {
                                      checkboxInput("addHighlyExpressedEdges",
                                                    label="Add highly expressed genes",
                                                    value=FALSE),
-                                     selectInput("metaboliteActions",
-                                                 label="Actions with atoms",
-                                                 c("Connect atoms inside metabolite"="connectAtomsInsideMetabolite",
-                                                   "Collapse atoms into metabolites"="collapseAtomsIntoMetabolites",
-                                                   "None" = "NoAction"),
-                                                 selected="NoAction")
+                                     conditionalPanel("(input.nodesAs == 'atoms') * (!input.loadExampleLipidDE) * (input.network != 'lipidomic')",
+                                                      selectInput("metaboliteActions",
+                                                                  label="Actions with atoms",
+                                                                  c("Connect atoms inside metabolite"="connectAtomsInsideMetabolite",
+                                                                    "Collapse atoms into metabolites"="collapseAtomsIntoMetabolites",
+                                                                    "None" = "NoAction"),
+                                                                  selected="NoAction")
+                                     )
                     )
                 ),
                 conditionalPanel("module.available",
@@ -192,7 +193,8 @@ app_ui <- function(config_file) {
 				var blob = new Blob([svgContent], {type:"image/svg+xml;charset=utf-8"});\
 				saveAs(blob, "module.svg");',
                                      icon=shiny::icon("download")),
-                                 downloadButton("downloadModule", "XGMML")
+                                 downloadButton("downloadModule", "XGMML"),
+                                 downloadButton("downloadXlsx", "XLSX")
                 ),
                 div(id="legend",
                     p(),

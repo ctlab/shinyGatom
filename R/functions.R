@@ -23,7 +23,7 @@ getJsNodeStyleAttributes <- function(attrs) {
         id=attrs$name,
         shape=if (!is.null(attrs$nodeType)) nodeShapeMap[nodeType] else "ellipse",
         fontSize=sapply(logPval, gatom:::getDotSize) * 25,
-        bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, gatom:::getDotColor) else "white",
+        bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, gatom:::getDotColor) else "#7777ff",
         borderWidth=4,
         borderColor="#eee",
         labelColor="black",
@@ -37,7 +37,7 @@ getJsEdgeStyleAttributes <- function(attrs) {
     with(attrs, data.frame(
         source=attrs$from,
         target=attrs$to,
-        label=if (!is.null(attrs$label)) label else "",
+        label=if (!is.null(attrs$label)) label else if (!is.null(attrs$gene)) gene else "",
         lineStyle="solid",
         fontSize=sapply(logPval, gatom:::getDotSize) * 25,
         lineColor=if (!is.null(attrs$log2FC)) sapply(as.numeric(log2FC), gatom:::getDotColor) else "grey",
