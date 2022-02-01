@@ -152,7 +152,7 @@ app_server <- function(config_file) {
                 # User has not uploaded a file yet and we don't have a key
                 return(NULL)
             }
-            
+
             if (grepl("xlsx?$", input$geneDE$name)){
                 res <- read_excel(path)
             } else {
@@ -182,7 +182,7 @@ app_server <- function(config_file) {
                 loginfo("not all fields in DE file: %s", input$geneDE$datapath)
                 stop(paste0("Genomic differential expression data should contain at least these fields: ",
                             paste(necessary.gene.de.fields, collapse=", ")))
-                
+
                 # if (grepl("xlsx?$", input$geneDE$name)) {
                 #     stop("We do not support excel files yet, please, use tab-separated files instead")
                 # } else{
@@ -286,7 +286,7 @@ app_server <- function(config_file) {
                     )
                 } else NULL)
         })
-        
+
         # NotMappedGeneData = reactiveValues({
         #     data <- geneDEInput()
         #     if (is.null(data)) {
@@ -316,6 +316,7 @@ app_server <- function(config_file) {
             # not.mapped.data <- NotMappedGeneData()
             format(as.data.frame(head(not.mapped.data, n=20)), digits=3)
         })
+        outputOptions(output, "geneDENotMappedTable", suspendWhenHidden = FALSE)
 
         metDEInputRaw <- reactive({
             if (loadExample()) {
@@ -346,7 +347,7 @@ app_server <- function(config_file) {
             loginfo(capture.output(str(input$metDE)))
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
-            
+
             if (grepl("xlsx?$", input$metDE$name)){
                 res <- read_excel(input$metDE$datapath)
             } else {
@@ -539,6 +540,7 @@ app_server <- function(config_file) {
             data <- data[ID %in% notMapped]
             format(as.data.frame(head(data, n=20)), digits=3)
         })
+        outputOptions(output, "metDENotMappedTable", suspendWhenHidden = FALSE)
 
         experimentTag <- reactive({
             geneData <- geneDEInput()
@@ -607,7 +609,7 @@ app_server <- function(config_file) {
                                                path = conf$path.to.met.rhea.db)
                     met.db <- met.rhea.db
                 }
-                
+
                 g <- makeMetabolicGraph(network=network,
                                         topology=topology,
                                         org.gatom.anno=org.gatom.anno,
