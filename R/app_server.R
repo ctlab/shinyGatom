@@ -264,6 +264,12 @@ app_server <- function(config_file) {
                     data <- data.new
                 }
             }
+            
+            
+            
+            if (geneIT == "Ensembl") {
+                data[, c("ID") := sub(pattern="\\.\\d*$", replacement="", x=data[["ID"]]) ]
+            }
 
             if (geneIT == org.gatom.anno$baseId) {
                 notMappedIDs <- setdiff(data$ID, org.gatom.anno$genes$gene)
@@ -841,7 +847,7 @@ app_server <- function(config_file) {
         })
 
         output$showModulePanel <- renderJs({
-            if (!is.null(gInput())) { return("mp = $('#network-panel'); mp[0].scrollIntoView();")
+            if (!is.null(gInput())) { return("mp = $('#scoring-panel'); mp[0].scrollIntoView();")
             }
             return("")
         })

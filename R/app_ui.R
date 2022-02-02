@@ -113,33 +113,10 @@ app_ui <- function(config_file) {
                     uiOutput("metDETable"),
                     uiOutput("metDENotMapped"),
                     uiOutput("metDENotMappedTable")
-                    ),
-                div(id="network-panel", class="bottom-buffer",
-                    h3("Network summary"),
-                    uiOutput("networkSummary"),
-                    conditionalPanel(
-                        "network.available",
-                        downloadButton("downloadNetwork", "Download XGMML")
-                        # # :todo: rework the UI and uncomment
-                        # ,
-                        # div(id="bum-plots",
-                        #     conditionalPanel("network.hasGenes",
-                        #                      class="col-sm-6",
-                        #                      h4("BUM distribution for genes"),
-                        #                      plotOutput("genesBUMPlot", width = "400px", height = "400px")
-                        #     ),
-                        #     conditionalPanel("network.hasMets",
-                        #                      class="col-sm-6",
-                        #                      h4("BUM distribution for metabolites"),
-                        #                      plotOutput("metsBUMPlot", width = "400px", height = "400px")
-                        #     )
-                        # )
-
                     )
-                ),
-            )
+                    )
         ),
-        div(id="module-panel", class="row top-buffer",
+        div(id="scoring-panel", class="row top-buffer",
             div(class="sidebar col-sm-3",
                 wellPanel(
                     conditionalPanel("network.hasGenes",
@@ -147,28 +124,58 @@ app_ui <- function(config_file) {
                                                    label="Don't use genes for scoring",
                                                    value=FALSE),
                                      conditionalPanel("!input.nullkgene",
-                                        numericInput("kgene",
-                                                  label=HTML("Number of positive genes"),
-                                                  max=100, min=0, value=50, step=1))),
-
+                                                      numericInput("kgene",
+                                                                   label=HTML("Number of positive genes"),
+                                                                   max=100, min=0, value=50, step=1))),
+                    
                     conditionalPanel("network.hasMets",
                                      checkboxInput("nullkmet",
                                                    label="Don't use metabolites for scoring",
                                                    value=FALSE),
                                      conditionalPanel("!input.nullkmet",
-                                        numericInput("kmet",
-                                                  label=HTML("Number of positive metabolites"),
-                                                  max=100, min=0, value=50, step=1))
+                                                      numericInput("kmet",
+                                                                   label=HTML("Number of positive metabolites"),
+                                                                   max=100, min=0, value=50, step=1))
                     ),
-
+                    
                     checkboxInput(
                         "solveToOptimality",
                         label="Try to solve to optimality",
                         value=FALSE),
+                    
                     conditionalPanel("network.available",
                                      uiOutput("solverString")
                     ),
-                    myActionButton("find", "Step 2: Find module", disabled=""),
+                    
+                    myActionButton("find", "Step 2: Find module", disabled="")
+                ),
+            ),
+            myMainPanel(
+                h3("Network summary"),
+                uiOutput("networkSummary"),
+                conditionalPanel(
+                    "network.available",
+                    downloadButton("downloadNetwork", "Download XGMML")
+                    # # :todo: rework the UI and uncomment
+                    # ,
+                    # div(id="bum-plots",
+                    #     conditionalPanel("network.hasGenes",
+                    #                      class="col-sm-6",
+                    #                      h4("BUM distribution for genes"),
+                    #                      plotOutput("genesBUMPlot", width = "400px", height = "400px")
+                    #     ),
+                    #     conditionalPanel("network.hasMets",
+                    #                      class="col-sm-6",
+                    #                      h4("BUM distribution for metabolites"),
+                    #                      plotOutput("metsBUMPlot", width = "400px", height = "400px")
+                    #     )
+                    # )
+                )
+            )
+        ),
+        div(id="module-panel", class="row top-buffer",
+            div(class="sidebar col-sm-3",
+                wellPanel(
                     conditionalPanel("network.available",
                                      checkboxInput("addHighlyExpressedEdges",
                                                    label="Add highly expressed genes",
@@ -243,7 +250,8 @@ app_ui <- function(config_file) {
                            tabPanel("Help", helpPanel),
                            tabPanel("About", aboutPanel)
                        )
-                ))
+                )
+            )
         )
     )
   }
