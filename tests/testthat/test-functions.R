@@ -99,8 +99,9 @@ test_that("Metabolites are fitted to BUM", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-    met.bum <- fitMetsToBUM(g=g, k.met=25)
+    k.met <- 25
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table, k=k.met)
     expect_true(!is.null(met.bum$lambda) && !is.null(met.bum$a))
 })
 
@@ -120,8 +121,9 @@ test_that("Genes are fitted to BUM", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-    gene.bum <- fitGenesToBUM(g=g, k.gene=25)
+    k.gene <- 25
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
     expect_true(!is.null(gene.bum$lambda) && !is.null(gene.bum$a))
 })
 
@@ -147,11 +149,17 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
 
     k.met <- 25
     k.gene <- 25
-    met.bum <- fitMetsToBUM(g=g, k.met=k.met)
-    gene.bum <- fitGenesToBUM(g=g, k.gene=k.gene)
-
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
+    gene.scores <- scoreNetwork(table=edge.table, k=k.gene, bum=gene.bum)
+    met.scores <- scoreNetwork(table=vertex.table, k=k.met, bum=met.bum)
+    
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
-                          metabolite.bum=met.bum, gene.bum=gene.bum)
+                          metabolite.bum=met.bum, gene.bum=gene.bum,
+                          vertex.threshold=met.scores$threshold, 
+                          edge.threshold=gene.scores$threshold)
 
     expect_true(!is.null(V(sg)$score))
 })
@@ -178,11 +186,17 @@ test_that("Graph is scored when k.gene is NULL", {
 
     k.met <- 25
     k.gene <- NULL
-    met.bum <- fitMetsToBUM(g=g, k.met=k.met)
-    gene.bum <- fitGenesToBUM(g=g, k.gene=k.gene)
-
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
+    gene.scores <- scoreNetwork(table=edge.table, k=k.gene, bum=gene.bum)
+    met.scores <- scoreNetwork(table=vertex.table, k=k.met, bum=met.bum)
+    
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
-                          metabolite.bum=met.bum, gene.bum=gene.bum)
+                          metabolite.bum=met.bum, gene.bum=gene.bum,
+                          vertex.threshold=met.scores$threshold, 
+                          edge.threshold=gene.scores$threshold)
 
     expect_true(!is.null(V(sg)$score))
 })
@@ -208,11 +222,17 @@ test_that("Graph is scored when k.met is NULL", {
 
     k.met <- NULL
     k.gene <- 25
-    met.bum <- fitMetsToBUM(g=g, k.met=k.met)
-    gene.bum <- fitGenesToBUM(g=g, k.gene=k.gene)
-
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
+    gene.scores <- scoreNetwork(table=edge.table, k=k.gene, bum=gene.bum)
+    met.scores <- scoreNetwork(table=vertex.table, k=k.met, bum=met.bum)
+    
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
-                          metabolite.bum=met.bum, gene.bum=gene.bum)
+                          metabolite.bum=met.bum, gene.bum=gene.bum,
+                          vertex.threshold=met.scores$threshold, 
+                          edge.threshold=gene.scores$threshold)
 
     expect_true(!is.null(V(sg)$score))
 })

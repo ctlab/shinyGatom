@@ -155,31 +155,36 @@ scoreNetwork <- function(table,
         warnWrapper <- suppressWarnings
     }
     
-    pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-    
-    if(is.null(bum)){
-        warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-    }
-    
-    if (bum$a <= 0.5) {
-        threshold <- if (k > length(pvalsToFit)) 1 else {
-            sort(pvalsToFit)[k]
+    if (!is.null(k)) {
+        pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+        
+        if(is.null(bum)){
+            warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
         }
         
-        threshold <- min(threshold,
-                         BioNet::fdrThreshold(threshold.min, bum))
-        
-        fdr <- gatom:::.reversefdrThreshold(threshold, bum)
-        
-        res <- list(threshold = threshold,
-                    a = bum$a,
-                    fdr = fdr)
+        if (bum$a <= 0.5) {
+            threshold <- if (k > length(pvalsToFit)) 1 else {
+                sort(pvalsToFit)[k]
+            }
+            
+            threshold <- min(threshold,
+                             BioNet::fdrThreshold(threshold.min, bum))
+            
+            fdr <- gatom:::.reversefdrThreshold(threshold, bum)
+            
+            res <- list(threshold = threshold,
+                        a = bum$a,
+                        fdr = fdr)
+        } else {
+            res <- list(threshold = NULL,
+                        a = bum$a,
+                        fdr = NULL)
+        }
     } else {
         res <- list(threshold = NULL,
-                    a = bum$a,
+                    a = NULL,
                     fdr = NULL)
     }
-    
     return(res)
 }
 
