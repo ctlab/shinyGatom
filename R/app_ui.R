@@ -155,21 +155,30 @@ app_ui <- function(config_file) {
                 uiOutput("networkSummary"),
                 conditionalPanel(
                     "network.available",
-                    downloadButton("downloadNetwork", "Download XGMML")
+                    downloadButton("downloadNetwork", "Download XGMML"),
                     # # :todo: rework the UI and uncomment
-                    # ,
-                    # div(id="bum-plots",
-                    #     conditionalPanel("network.hasGenes",
-                    #                      class="col-sm-6",
-                    #                      h4("BUM distribution for genes"),
-                    #                      plotOutput("genesBUMPlot", width = "400px", height = "400px")
-                    #     ),
-                    #     conditionalPanel("network.hasMets",
-                    #                      class="col-sm-6",
-                    #                      h4("BUM distribution for metabolites"),
-                    #                      plotOutput("metsBUMPlot", width = "400px", height = "400px")
-                    #     )
-                    # )
+                    h3("Scoring"),
+                    div(id="bum-plots",
+                        conditionalPanel("network.hasGenes",
+                                         class="col-sm-6",
+                                         h4("BUM distribution for genes"),
+                                         conditionalPanel("input.nullkgene",
+                                                          p("Genes are not used for scoring")),
+                                         conditionalPanel("!input.nullkgene",
+                                                          uiOutput("genesScoringSummary"),
+                                                          plotOutput("genesBUMPlot", width = "400px", height = "400px")
+                                                          )
+                        ),
+                        conditionalPanel("network.hasMets",
+                                         class="col-sm-6",
+                                         h4("BUM distribution for metabolites"),
+                                         conditionalPanel("input.nullkmet",
+                                                          p("Metabolites are not used for scoring")),
+                                         conditionalPanel("!input.nullkmet",
+                                                          uiOutput("metsScoringSummary"),
+                                                          plotOutput("metsBUMPlot", width = "400px", height = "400px"))
+                        )
+                    )
                 )
             )
         ),

@@ -1,8 +1,4 @@
 
-# afterCall <- function() {
-#     shinyjs::runjs("setTimeout(function(){cy.panzoom()},3500)")
-# }
-
 getJsTooltip <- function(attr.values) {
     attr.strings <- list()
     attr.names <- names(attr.values)
@@ -45,11 +41,152 @@ getJsEdgeStyleAttributes <- function(attrs) {
     ))
 }
 
+# #' @import gatom
+# scoreGraphShiny <- function(g, k.gene, k.met,
+#                             vertex.threshold.min=0.1,
+#                             edge.threshold.min=0.1,
+#                             met.score.coef=1,
+#                             metabolite.bum=NULL,
+#                             gene.bum=NULL,
+#                             show.warnings=TRUE,
+#                             raw=FALSE) {
+#     if (show.warnings) {
+#         warnWrapper <- identity
+#     } else {
+#         warnWrapper <- suppressWarnings
+#     }
+#     
+#     vertex.table <- data.table(as_data_frame(g, what="vertices"))
+#     edge.table <- data.table(as_data_frame(g, what="edges"))
+#     
+#     if (!is.null(k.met)) {
+#         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+#         if(is.null(metabolite.bum)) {
+#             warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+#         }
+#         
+#         if (metabolite.bum$a > 0.5) {
+#             V(g)$score <- 0
+#             warning("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution")
+#             
+#         } else {
+#             vertex.threshold <- if (k.met > length(pvalsToFit)) 1 else {
+#                 sort(pvalsToFit)[k.met]
+#             }
+#             
+#             vertex.threshold <- min(vertex.threshold,
+#                                     BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
+#             
+#             met.fdr <- gatom:::.reversefdrThreshold(vertex.threshold, metabolite.bum)
+#             
+#             gatom:::.messagef("Metabolite p-value threshold: %f", vertex.threshold)
+#             gatom:::.messagef("Metabolite BU alpha: %f", metabolite.bum$a)
+#             gatom:::.messagef("FDR for metabolites: %f", met.fdr)
+#             
+#             V(g)$score <- with(vertex.table,
+#                                (metabolite.bum$a - 1) *
+#                                    (log(gatom:::.replaceNA(pval, 1)) - log(vertex.threshold)))
+#             V(g)$score <- V(g)$score * met.score.coef
+#         }
+#     }
+#     else {
+#         V(g)$score <- 0
+#         V(g)$signal <- ""
+#         
+#     }
+#     
+#     if (!is.null(k.gene)) {
+#         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+#         if(is.null(gene.bum)){
+#             warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+#         }
+#         
+#         if(gene.bum$a > 0.5) {
+#             E(g)$score <- 0
+#             warning("Edge scores have been assigned to 0 due to an inappropriate p-value distribution")
+#             
+#         } else {
+#             edge.threshold <- if (k.gene > length(pvalsToFit)) 1 else {
+#                 sort(pvalsToFit)[k.gene]
+#             }
+#             
+#             edge.threshold <- min(edge.threshold,
+#                                   BioNet::fdrThreshold(edge.threshold.min, gene.bum))
+#             
+#             gene.fdr <- gatom:::.reversefdrThreshold(edge.threshold, gene.bum)
+#             
+#             gatom:::.messagef("Gene p-value threshold: %f", edge.threshold)
+#             gatom:::.messagef("Gene BU alpha: %f", gene.bum$a)
+#             gatom:::.messagef("FDR for genes: %f", gene.fdr)
+#             
+#             E(g)$score <- with(edge.table,
+#                                (gene.bum$a - 1) *
+#                                    (log(gatom:::.replaceNA(pval, 1)) - log(edge.threshold)))
+#         }
+#     }
+#     else {
+#         E(g)$score <- 0
+#         E(g)$signal <- ""
+#     }
+#     g
+#     if (raw) {
+#         return(g)
+#     }
+#     
+#     res <- normalize_sgmwcs_instance(g,
+#                                      nodes.weight.column = "score",
+#                                      edges.weight.column = "score",
+#                                      nodes.group.by = "signal",
+#                                      edges.group.by = "signal",
+#                                      group.only.positive = TRUE)
+#     res
+# }
+
+#' @import gatom
+scoreNetwork <- function(table, 
+                         k,
+                         threshold.min=0.1,
+                         bum=NULL,
+                         show.warnings=TRUE,
+                         raw=FALSE){
+    if (show.warnings) {
+        warnWrapper <- identity
+    } else {
+        warnWrapper <- suppressWarnings
+    }
+    
+    pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+    
+    if(is.null(bum)){
+        warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+    }
+    
+    if (bum$a <= 0.5) {
+        threshold <- if (k > length(pvalsToFit)) 1 else {
+            sort(pvalsToFit)[k]
+        }
+        
+        threshold <- min(threshold,
+                         BioNet::fdrThreshold(threshold.min, bum))
+        
+        fdr <- gatom:::.reversefdrThreshold(threshold, bum)
+        
+        res <- list(threshold = threshold,
+                    a = bum$a,
+                    fdr = fdr)
+    } else {
+        res <- list(threshold = NULL,
+                    a = bum$a,
+                    fdr = NULL)
+    }
+    
+    return(res)
+}
 
 #' @import gatom
 scoreGraphShiny <- function(g, k.gene, k.met,
-                            vertex.threshold.min=0.1,
-                            edge.threshold.min=0.1,
+                            vertex.threshold=NULL,
+                            edge.threshold=NULL,
                             met.score.coef=1,
                             metabolite.bum=NULL,
                             gene.bum=NULL,
@@ -65,75 +202,34 @@ scoreGraphShiny <- function(g, k.gene, k.met,
     edge.table <- data.table(as_data_frame(g, what="edges"))
 
     if (!is.null(k.met)) {
-        pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        if(is.null(metabolite.bum)) {
-            warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-        }
-
         if (metabolite.bum$a > 0.5) {
             V(g)$score <- 0
-            warning("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution")
-
         } else {
-            vertex.threshold <- if (k.met > length(pvalsToFit)) 1 else {
-                sort(pvalsToFit)[k.met]
-            }
-
-            vertex.threshold <- min(vertex.threshold,
-                                    BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
-
-            met.fdr <- gatom:::.reversefdrThreshold(vertex.threshold, metabolite.bum)
-
-            gatom:::.messagef("Metabolite p-value threshold: %f", vertex.threshold)
-            gatom:::.messagef("Metabolite BU alpha: %f", metabolite.bum$a)
-            gatom:::.messagef("FDR for metabolites: %f", met.fdr)
-
             V(g)$score <- with(vertex.table,
                                (metabolite.bum$a - 1) *
                                    (log(gatom:::.replaceNA(pval, 1)) - log(vertex.threshold)))
             V(g)$score <- V(g)$score * met.score.coef
         }
-    }
-    else {
+    } else {
         V(g)$score <- 0
         V(g)$signal <- ""
-
     }
-
+    
+    
     if (!is.null(k.gene)) {
-        pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        if(is.null(gene.bum)){
-            warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-        }
-
         if(gene.bum$a > 0.5) {
             E(g)$score <- 0
-            warning("Edge scores have been assigned to 0 due to an inappropriate p-value distribution")
-
         } else {
-            edge.threshold <- if (k.gene > length(pvalsToFit)) 1 else {
-                sort(pvalsToFit)[k.gene]
-            }
-
-            edge.threshold <- min(edge.threshold,
-                                  BioNet::fdrThreshold(edge.threshold.min, gene.bum))
-
-            gene.fdr <- gatom:::.reversefdrThreshold(edge.threshold, gene.bum)
-
-            gatom:::.messagef("Gene p-value threshold: %f", edge.threshold)
-            gatom:::.messagef("Gene BU alpha: %f", gene.bum$a)
-            gatom:::.messagef("FDR for genes: %f", gene.fdr)
-
             E(g)$score <- with(edge.table,
                                (gene.bum$a - 1) *
                                    (log(gatom:::.replaceNA(pval, 1)) - log(edge.threshold)))
         }
-    }
-    else {
+    } else {
         E(g)$score <- 0
         E(g)$signal <- ""
     }
     g
+    
     if (raw) {
         return(g)
     }
@@ -173,46 +269,18 @@ prepareForShinyCyJS <- function(module, layout=list(name = "cose", animate = FAL
 
 
 #' @import gatom
-fitGenesToBUM <- function(g,
-                          k.gene,
-                          show.warnings=TRUE
+fitToBUM <- function(table, k, show.warnings=TRUE
 ) {
     if (show.warnings) {
         warnWrapper <- identity
     } else {
         warnWrapper <- suppressWarnings
     }
-
-    edge.table <- data.table(as_data_frame(g, what="edges"))
-
-    if (!is.null(k.gene)) {
-        pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-        res <- gene.bum
-    } else {
-        return(NULL)
-    }
-    res
-}
-
-
-#' @import gatom
-fitMetsToBUM <- function(g,
-                         k.met,
-                         show.warnings=TRUE
-) {
-    if (show.warnings) {
-        warnWrapper <- identity
-    } else {
-        warnWrapper <- suppressWarnings
-    }
-
-    vertex.table <- data.table(as_data_frame(g, what="vertices"))
-
-    if (!is.null(k.met)) {
-        pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-        res <- metabolite.bum
+    
+    if (!is.null(k)) {
+        pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+        warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+        res <- bum
     } else {
         return(NULL)
     }
