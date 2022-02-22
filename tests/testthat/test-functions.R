@@ -1,6 +1,5 @@
 context("Util functions")
 
-# data()
 library(gatom)
 data("org.Mm.eg.gatom.annoEx")
 org.Mm.eg.gatom.anno <- org.Mm.eg.gatom.annoEx
@@ -9,7 +8,7 @@ example.gene.de <- gene.de.rawEx
 data("met.kegg.dbEx")
 met.kegg.db <- met.kegg.dbEx
 
-conf <- config::get(file=system.file('config.yml', package = 'ShinyGATOM'),
+conf <- config::get(file=system.file('config.yml', package = 'shinyGatom'),
                     use_parent = FALSE)
 
 test_that("lazyReadRDS works with remote files", {
@@ -22,7 +21,7 @@ test_that("lazyReadRDS works with remote files", {
 
 
 test_that("Node attributes are created", {
-    load(system.file('testdata/moduleEx.Rda', package = 'ShinyGATOM'))
+    load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
     vertex.table <- as_data_frame(module, what="vertices")
     res <- getJsNodeStyleAttributes(vertex.table)
     expect_true(!is.null(res$tooltip))
@@ -30,7 +29,7 @@ test_that("Node attributes are created", {
 
 
 test_that("Edge attributes are created", {
-    load(system.file('testdata/moduleEx.Rda', package = 'ShinyGATOM'))
+    load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
     edge.table <- as_data_frame(module, what="edges")
     res <- getJsEdgeStyleAttributes(edge.table)
     expect_true(!is.null(res$tooltip))
@@ -38,7 +37,7 @@ test_that("Edge attributes are created", {
 
 
 test_that("ShinyCyJs data is created", {
-    load(system.file('testdata/moduleEx.Rda', package = 'ShinyGATOM'))
+    load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
     res <- prepareForShinyCyJS(module)
     expect_true(!is.null(res))
 })
@@ -47,16 +46,10 @@ test_that("ShinyCyJs data is created", {
 test_that("KEGG network is created with nodes as atoms", {
     network <- lazyReadRDS("kegg.network",
                            path = conf$path.to.kegg.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "atoms"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-    # met.db <- lazyReadRDS(name = "met.kegg.db",
-    #                       path = conf$path.to.met.kegg.db)
     es <- makeMetabolicGraph(network=network,
                              topology=topology,
                              org.gatom.anno=org.Mm.eg.gatom.anno,
@@ -73,11 +66,7 @@ test_that("KEGG network is created with nodes as atoms", {
 test_that("Rhea metwork is created with nodes as metabolites", {
     network <- lazyReadRDS("rhea.network",
                            path = conf$path.to.rhea.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "metabolites"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- lazyReadRDS(name = "met.rhea.db",
@@ -98,16 +87,10 @@ test_that("Rhea metwork is created with nodes as metabolites", {
 test_that("Metabolites are fitted to BUM", {
     network <- lazyReadRDS("kegg.network",
                            path = conf$path.to.kegg.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "atoms"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-    # met.db <- lazyReadRDS(name = "met.kegg.db",
-    #                       path = conf$path.to.met.kegg.db)
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
                             org.gatom.anno=org.Mm.eg.gatom.anno,
@@ -116,8 +99,9 @@ test_that("Metabolites are fitted to BUM", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-    met.bum <- fitMetsToBUM(g=g, k.met=25)
+    k.met <- 25
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table)
     expect_true(!is.null(met.bum$lambda) && !is.null(met.bum$a))
 })
 
@@ -125,16 +109,10 @@ test_that("Metabolites are fitted to BUM", {
 test_that("Genes are fitted to BUM", {
     network <- lazyReadRDS("kegg.network",
                            path = conf$path.to.kegg.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "atoms"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-    # met.db <- lazyReadRDS(name = "met.kegg.db",
-    #                       path = conf$path.to.met.kegg.db)
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
                             org.gatom.anno=org.Mm.eg.gatom.anno,
@@ -143,8 +121,9 @@ test_that("Genes are fitted to BUM", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-    gene.bum <- fitGenesToBUM(g=g, k.gene=25)
+    k.gene <- 25
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table)
     expect_true(!is.null(gene.bum$lambda) && !is.null(gene.bum$a))
 })
 
@@ -153,16 +132,10 @@ test_that("Genes are fitted to BUM", {
 test_that("Graph is scored when k.gene and k.met are not NULL", {
     network <- lazyReadRDS("kegg.network",
                            path = conf$path.to.kegg.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "atoms"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-    # met.db <- lazyReadRDS(name = "met.kegg.db",
-    #                       path = conf$path.to.met.kegg.db)
 
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
@@ -175,12 +148,20 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
 
 
     k.met <- 25
-    k.gene <- 25
-    met.bum <- fitMetsToBUM(g=g, k.met=k.met)
-    gene.bum <- fitGenesToBUM(g=g, k.gene=k.gene)
-
+    k.gene <- 50
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table)
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table)
+    gene.scores <- getScoringParameters(table=edge.table, scoring.parameter="k", 
+                                        scor.par.value=k.gene, bum=gene.bum)
+    met.scores <- getScoringParameters(table=vertex.table, scoring.parameter="k", 
+                                       scor.par.value=k.met, bum=met.bum)
+    
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
-                          metabolite.bum=met.bum, gene.bum=gene.bum)
+                          metabolite.bum=met.bum, gene.bum=gene.bum,
+                          vertex.threshold=met.scores$threshold, 
+                          edge.threshold=gene.scores$threshold)
 
     expect_true(!is.null(V(sg)$score))
 })
@@ -190,16 +171,10 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
 test_that("Graph is scored when k.gene is NULL", {
     network <- lazyReadRDS("kegg.network",
                            path = conf$path.to.kegg.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "atoms"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-    # met.db <- lazyReadRDS(name = "met.kegg.db",
-    #                       path = conf$path.to.met.kegg.db)
 
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
@@ -213,11 +188,19 @@ test_that("Graph is scored when k.gene is NULL", {
 
     k.met <- 25
     k.gene <- NULL
-    met.bum <- fitMetsToBUM(g=g, k.met=k.met)
-    gene.bum <- fitGenesToBUM(g=g, k.gene=k.gene)
-
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table)
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table)
+    gene.scores <- getScoringParameters(table=edge.table, scoring.parameter="k", 
+                                        scor.par.value=k.gene, bum=gene.bum)
+    met.scores <- getScoringParameters(table=vertex.table, scoring.parameter="k", 
+                                       scor.par.value=k.met, bum=met.bum)
+    
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
-                          metabolite.bum=met.bum, gene.bum=gene.bum)
+                          metabolite.bum=met.bum, gene.bum=gene.bum,
+                          vertex.threshold=met.scores$threshold, 
+                          edge.threshold=gene.scores$threshold)
 
     expect_true(!is.null(V(sg)$score))
 })
@@ -226,16 +209,10 @@ test_that("Graph is scored when k.gene is NULL", {
 test_that("Graph is scored when k.met is NULL", {
     network <- lazyReadRDS("kegg.network",
                            path = conf$path.to.kegg.network)
-    # org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-    #                                     conf$path.to.org.Mm.eg.gatom.anno)
     topology <- "atoms"
-    # example.gene.de <- force(fread(conf$example.gene.de.path))
-    # attr(example.gene.de, "name") <- basename(conf$example.gene.de.path)
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-    # met.db <- lazyReadRDS(name = "met.kegg.db",
-    #                       path = conf$path.to.met.kegg.db)
 
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
@@ -249,11 +226,19 @@ test_that("Graph is scored when k.met is NULL", {
 
     k.met <- NULL
     k.gene <- 25
-    met.bum <- fitMetsToBUM(g=g, k.met=k.met)
-    gene.bum <- fitGenesToBUM(g=g, k.gene=k.gene)
-
+    vertex.table <- data.table(as_data_frame(g, what="vertices"))
+    met.bum <- fitToBUM(table=vertex.table)
+    edge.table <- data.table(as_data_frame(g, what="edges"))
+    gene.bum <- fitToBUM(table=edge.table)
+    gene.scores <- getScoringParameters(table=edge.table, scoring.parameter="k", 
+                                        scor.par.value=k.gene, bum=gene.bum)
+    met.scores <- getScoringParameters(table=vertex.table, scoring.parameter="k", 
+                                       scor.par.value=k.met, bum=met.bum)
+    
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
-                          metabolite.bum=met.bum, gene.bum=gene.bum)
+                          metabolite.bum=met.bum, gene.bum=gene.bum,
+                          vertex.threshold=met.scores$threshold, 
+                          edge.threshold=gene.scores$threshold)
 
     expect_true(!is.null(V(sg)$score))
 })

@@ -1,4 +1,4 @@
-Package: ShinyGATOM
+Package: shinyGatom
 Title: Shiny GATOM
 Version: 0.0.0.9000
 Authors@R: 
@@ -9,7 +9,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 biocViews: GeneExpression, DifferentialExpression, Pathways
-Imports: 
+Imports:
     BioNet,
     data.table,
     devtools,
@@ -24,5 +24,6 @@ Imports:
     shinyCyJS,
     config,
     gatom,
+    openxlsx,
     fgsea
 

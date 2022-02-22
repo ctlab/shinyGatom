@@ -1,14 +1,13 @@
 ### About
 
-By Alexey Sergushichev alserg@corp.ifmo.ru and co
+Authors: Anastasiia Gainullina, Mariia Emelianova, Alexander Loboda, Nikolay Poperechnyi, Maxim Artyomov, Alexey Sergushichev.
 
-You can find source code of this site <a href="https://github.com/ctlab/shinygam">here</a>.
+Contact: alserg@itmo.ru
 
-<div id="GAMVersion" class="shiny-html-output"></div>
+You can find source code of this site at <a href="https://github.com/ctlab/shinyGatom">here</a>.
 
-Citation: Sergushichev et al. GAM: a web-service for integrated transcriptional 
-and metabolic network analysis. Nucleic Acids Research. http://dx.doi.org/10.1093/nar/gkw266
+<div id="GatomVersion" class="shiny-html-output"></div>
 
 Powered by R Shiny.
 
-The authors thank Nicole Rockweiler for the help with improving the web-service.
+Source code: https://github.com/ctlab/shinyGatom/.
