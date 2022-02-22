@@ -182,13 +182,6 @@ app_server <- function(config_file) {
                 loginfo("not all fields in DE file: %s", input$geneDE$datapath)
                 stop(paste0("Genomic differential expression data should contain at least these fields: ",
                             paste(necessary.gene.de.fields, collapse=", ")))
-                
-                # if (grepl("xlsx?$", input$geneDE$name)) {
-                #     stop("We do not support excel files yet, please, use tab-separated files instead")
-                # } else{
-                #     stop(paste0("Genomic differential expression data should contain at least these fields: ",
-                #                 paste(necessary.gene.de.fields, collapse=", ")))
-                # }
             }
             
             attr(res, "name") <- attr(gene.de.raw, "name")
@@ -265,9 +258,7 @@ app_server <- function(config_file) {
                 }
             }
             
-            if (geneIT == "Ensembl") {
-                data[, c("ID") := sub(pattern="\\.\\d*$", replacement="", x=data[["ID"]]) ]
-            }
+            data[, c("ID") := sub(pattern="\\.\\d*$", replacement="", x=data[["ID"]])]
             
             if (geneIT == org.gatom.anno$baseId) {
                 notMappedIDs <- setdiff(data$ID, org.gatom.anno$genes$gene)
@@ -537,7 +528,6 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             notMapped <- notMappedMets()
-            # network <- getNetwork()
             
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
@@ -610,7 +600,6 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            
             network <- isolate(getNetwork())
             gene.ids <- isolate(geneIdsType())
             met.ids <- isolate(metIdsType())
@@ -620,15 +609,8 @@ app_server <- function(config_file) {
             longProcessStart()
             
             tryCatch({
-                # if (!is.null(gene.de)) {
-                #     gene.de <- gene.de[which(gene.de$pval < 1), ]
-                # }
                 
-                # if (!is.null(met.de)) {
-                #     met.de <- met.de[which(met.de$pval < 1), ]
-                # }
-                
-                topology <- input$nodesAs
+                topology <- isolate(input$nodesAs)
                 org.gatom.anno <- getAnnotation()
                 keepReactionsWithoutEnzymes <- FALSE
                 gene2reaction.extra <- NULL
@@ -701,6 +683,29 @@ app_server <- function(config_file) {
             input$kgene
         })
         
+        thresholdGene <- reactive({
+            gene.de <- geneDEInput()
+            
+            if (is.null(gene.de)) {
+                return(NULL)
+            } else if (input$nullkgene) {
+                return(NULL)
+            }
+            10^input$thresholdgene
+        })
+        
+        fdrGene <- reactive({
+            gene.de <- geneDEInput()
+            
+            if (is.null(gene.de)) {
+                return(NULL)
+            } else if (input$nullkgene) {
+                return(NULL)
+            }
+            10^input$fdrgene
+        })
+        
+        
         kMet <- reactive({
             met.de <- metDEInput()
             
@@ -712,21 +717,41 @@ app_server <- function(config_file) {
             input$kmet
         })
         
+        thresholdMet <- reactive({
+            met.de <- metDEInput()
+            
+            if (is.null(met.de)) {
+                return(NULL)
+            } else if (input$nullkmet) {
+                return(NULL)
+            }
+            10^input$thresholdmet
+        })
+        
+        fdrMet <- reactive({
+            met.de <- metDEInput()
+            
+            if (is.null(met.de)) {
+                return(NULL)
+            } else if (input$nullkmet) {
+                return(NULL)
+            }
+            10^input$fdrmet
+        })
         
         genBUM <- reactive({
             g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
-            
-            k.gene <- kGene()
-            if (is.null(k.gene)) {
+
+            if (is.null(input$kgene) & is.null(input$thresholdgene) & is.null(input$fdrgene)) {
                 return(NULL)
             }
-            
+
             edge.table <- data.table(as_data_frame(g, what="edges"))
-            
-            res <- fitToBUM(table=edge.table, k=k.gene)
+
+            res <- fitToBUM(table=edge.table)
             res
         })
         
@@ -737,140 +762,187 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            k.met <- kMet()
-            if (is.null(k.met)) {
+            if (is.null(input$kmet) & is.null(input$fdrmet) & is.null(input$thresholdmet)) {
                 return(NULL)
             }
             
             vertex.table <- data.table(as_data_frame(g, what="vertices"))
             
-            res <- fitToBUM(table=vertex.table, k=k.met)
+            res <- fitToBUM(table=vertex.table)
             res
         })
         
+        
         ## :todo: rework the UI and uncomment
+        
         genesScoring <- reactive({
             g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
-            
-            k.gene <- kGene()
-            if (is.null(k.gene)) {
-                return(NULL)
-            }
+            edge.table <- data.table(as_data_frame(g, what="edges"))
             
             gene.bum <- genBUM()
             if (is.null(gene.bum)) {
                 return(NULL)
             }
             
+            if (input$scoringParameterGenes == 'kgenechosen') {
+                k.gene <- kGene()
+                scores <- getScoringParameters(table=edge.table, 
+                                               scoring.parameter="k",
+                                               scor.par.value=k.gene, 
+                                               bum=gene.bum)
+                
+            } else if (input$scoringParameterGenes == 'thresholdgenechosen') {
+                threshold.gene <- thresholdGene()
+                scores <- getScoringParameters(table=edge.table, 
+                                               scoring.parameter="threshold",
+                                               scor.par.value=threshold.gene, 
+                                               bum=gene.bum)
+            } else {
+                fdr.gene <- fdrGene()
+                scores <- getScoringParameters(table=edge.table, 
+                                               scoring.parameter="fdr",
+                                               scor.par.value=fdr.gene, 
+                                               bum=gene.bum)
+            }
+            
+            return(scores)
+        })
+        
+        
+        output$genesBUMSummary <- renderUI({
+            g <- gInput()
+            if (is.null(g)) {
+                return(NULL)
+            }
             edge.table <- data.table(as_data_frame(g, what="edges"))
             
-            res <- scoreNetwork(table=edge.table,
-                                k=k.gene,
-                                bum=gene.bum)
-            return(res)
-        })
-        
-        output$genesScoringSummary <- renderUI({
-            
-            req(input$kgene)
-            
-            k.gene <- kGene()
-            if (is.null(k.gene)) {
+            gene.bum <- isolate(genBUM())
+            if (is.null(gene.bum)) {
                 return(NULL)
             }
             
-            scores <- genesScoring()
+            pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
             
-            if (is.null(scores)) {
-                return(NULL)
-            }
-            
-            if (scores$a > 0.5) {
-                div(
-                    p(sprintf("Edge scores have been assigned to 0 due to an inappropriate p-value distribution"))
-                )
-            } else {
-                div(
-                    p(sprintf("Gene p-value threshold: %s", round(scores$threshold, 6))),
-                    p(sprintf("Gene BU alpha: %s", round(scores$a, 6))),
-                    p(sprintf("FDR for genes: %s", round(scores$fdr, 6)))
-                )
-            }
-            
+            div(
+                p(sprintf("Gene BU alpha: %s", round(gene.bum$a, 6))),
+                p(sprintf("Amount of gene signals: %s", length(pvalsToFit)))
+            )
         })
-        
         
         output$genesBUMPlot <- renderPlot({
-            
-            req(input$kgene)
             
             g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
+            edge.table <- data.table(as_data_frame(g, what="edges"))
+            
             gen.bum <- genBUM()
             if (is.null(gen.bum)) {
                 return(NULL)
             }
             
-            plot(gen.bum)
+            hist(gen.bum)
         })
+        
+        output$genesScoringSummary <- renderUI({
+            req(input$kgene, input$thresholdgene, input$fdrgene)
+            
+            g <- gInput()
+            if (is.null(g)) {
+                return(NULL)
+            }
+            
+            gene.bum <- isolate(genBUM())
+            if (is.null(gene.bum)) {
+                return(NULL)
+            }
+            
+            scores <- genesScoring()
+            if (is.null(scores)) {
+                return(NULL)
+            }
+            
+            if (gene.bum$a > 0.5) {
+                div(
+                    # p(sprintf("Gene BU alpha: %s", round(gene.bum$a, 6))),
+                    # p(sprintf("Amount of gene signals: %s", round(scores$signals, 0))),
+                    p(sprintf("Edge scores have been assigned to 0 due to an inappropriate p-value distribution"))
+                )
+            } else {
+                div(
+                    # p(sprintf("Gene BU alpha: %s", round(gene.bum$a, 6))),
+                    # p(sprintf("Amount of gene signals: %s", round(scores$signals, 0))),
+                    p(sprintf("Number of positive genes: %s", round(scores$k, 0))),
+                    p(sprintf("Gene p-value threshold: %s", round(scores$threshold, 6))),
+                    p(sprintf("FDR for genes: %s", round(scores$fdr, 6)))
+                )
+            }
+        })
+        
         
         metsScoring <- reactive({
             g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
+            vertex.table <- data.table(as_data_frame(g, what="vertices"))
             
-            k.met <- kMet()
-            if (is.null(k.met)) {
-                return(NULL)
-            }
-            
-            met.bum <- metBUM()
+            met.bum <- isolate(metBUM())
             if (is.null(met.bum)) {
                 return(NULL)
             }
             
-            vertex.table <- data.table(as_data_frame(g, what="vertices"))
+            if (input$scoringParameterMets == 'kmetchosen') {
+                k.met <- kMet()
+                scores <- getScoringParameters(table=vertex.table, 
+                                               scoring.parameter="k",
+                                               scor.par.value=k.met, 
+                                               bum=met.bum)
+                
+            } else if (input$scoringParameterMets == 'thresholdmetchosen') {
+                threshold.met <- thresholdMet()
+                scores <- getScoringParameters(table=vertex.table, 
+                                               scoring.parameter="threshold",
+                                               scor.par.value=threshold.met, 
+                                               bum=met.bum)
+            } else {
+                fdr.met <- fdrMet()
+                scores <- getScoringParameters(table=vertex.table, 
+                                               scoring.parameter="fdr",
+                                               scor.par.value=fdr.met, 
+                                               bum=met.bum)
+            }
             
-            res <- scoreNetwork(table=vertex.table,
-                                k=k.met,
-                                bum=met.bum)
-            res
+            return(scores)
         })
         
-        
-        output$metsScoringSummary <- renderUI({
+        output$metsBUMSummary <- renderUI({
+            g <- gInput()
+            if (is.null(g)) {
+                return(NULL)
+            }
+            vertex.table <- data.table(as_data_frame(g, what="vertices"))
             
-            req(input$kmet)
-            
-            k.met <- kMet()
-            if (is.null(k.met)) {
+            met.bum <- isolate(metBUM())
+            if (is.null(met.bum)) {
                 return(NULL)
             }
             
-            scores <- metsScoring()
+            pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
             
-            if (scores$a > 0.5) {
-                div(
-                    p(sprintf("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution"))
-                )
-            } else {
-                div(
-                    p(sprintf("Metabolite p-value threshold: %s", round(scores$threshold, 6))),
-                    p(sprintf("Metabolite BU alpha: %s", round(scores$a, 6))),
-                    p(sprintf("FDR for metabolites: %s", round(scores$fdr, 6)))
-                )
-            }
+            div(
+                p(sprintf("Metabolite BU alpha: %s", round(met.bum$a, 6))),
+                p(sprintf("Amount of metabolite signals: %s", length(pvalsToFit)))
+            )
         })
         
         output$metsBUMPlot <- renderPlot({
             
-            req(input$kmet)
+            req(input$kmet | input$thresholdmet | input$fdrmet)
             
             g <- gInput()
             if (is.null(g)) {
@@ -881,7 +953,42 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            plot(met.bum)
+            hist(met.bum)
+        })
+        
+        output$metsScoringSummary <- renderUI({
+            req(input$kmet, input$thresholdmet, input$fdrmet)
+            
+            g <- gInput()
+            if (is.null(g)) {
+                return(NULL)
+            }
+            
+            met.bum <- isolate(metBUM())
+            if (is.null(met.bum)) {
+                return(NULL)
+            }
+            
+            scores <- metsScoring()
+            if (is.null(scores)) {
+                return(NULL)
+            }
+            
+            if (met.bum$a > 0.5) {
+                div(
+                    # p(sprintf("Metabolite BU alpha: %s", round(met.bum$a, 6))),
+                    # p(sprintf("Amount of metabolite signals: %s", round(scores$signals, 0))),
+                    p(sprintf("Node scores have been assigned to 0 due to an inappropriate p-value distribution"))
+                )
+            } else {
+                div(
+                    # p(sprintf("Metabolite BU alpha: %s", round(met.bum$a, 6))),
+                    # p(sprintf("Amount of metabolite signals: %s", round(scores$signals, 0))),
+                    p(sprintf("Number of positive metabolites: %s", round(scores$k, 0))),
+                    p(sprintf("Metabolite p-value threshold: %s", round(scores$threshold, 6))),
+                    p(sprintf("FDR for metabolites: %s", round(scores$fdr, 6)))
+                )
+            }
         })
         
         
@@ -994,18 +1101,16 @@ app_server <- function(config_file) {
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
             
-            k.gene <- kGene()
-            k.met <- kMet()
-            
             gen.bum <- genBUM()
             met.bum <- metBUM()
             
             gen.scores <- genesScoring()
             met.scores <- metsScoring()
             
-            res <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
+            res <- scoreGraphShiny(g=g, k.gene=gen.scores$k, k.met=met.scores$k,
                                    metabolite.bum=met.bum, gene.bum=gen.bum,
-                                   vertex.threshold=met.scores$threshold, edge.threshold=gen.scores$threshold
+                                   vertex.threshold=met.scores$threshold, 
+                                   edge.threshold=gen.scores$threshold
             )
             
             

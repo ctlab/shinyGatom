@@ -55,34 +55,34 @@ getJsEdgeStyleAttributes <- function(attrs) {
 #     } else {
 #         warnWrapper <- suppressWarnings
 #     }
-#     
+# 
 #     vertex.table <- data.table(as_data_frame(g, what="vertices"))
 #     edge.table <- data.table(as_data_frame(g, what="edges"))
-#     
+# 
 #     if (!is.null(k.met)) {
 #         pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
 #         if(is.null(metabolite.bum)) {
 #             warnWrapper(metabolite.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
 #         }
-#         
+# 
 #         if (metabolite.bum$a > 0.5) {
 #             V(g)$score <- 0
 #             warning("Vertex scores have been assigned to 0 due to an inappropriate p-value distribution")
-#             
+# 
 #         } else {
 #             vertex.threshold <- if (k.met > length(pvalsToFit)) 1 else {
 #                 sort(pvalsToFit)[k.met]
 #             }
-#             
+# 
 #             vertex.threshold <- min(vertex.threshold,
 #                                     BioNet::fdrThreshold(vertex.threshold.min, metabolite.bum))
-#             
+# 
 #             met.fdr <- gatom:::.reversefdrThreshold(vertex.threshold, metabolite.bum)
-#             
+# 
 #             gatom:::.messagef("Metabolite p-value threshold: %f", vertex.threshold)
 #             gatom:::.messagef("Metabolite BU alpha: %f", metabolite.bum$a)
 #             gatom:::.messagef("FDR for metabolites: %f", met.fdr)
-#             
+# 
 #             V(g)$score <- with(vertex.table,
 #                                (metabolite.bum$a - 1) *
 #                                    (log(gatom:::.replaceNA(pval, 1)) - log(vertex.threshold)))
@@ -92,33 +92,33 @@ getJsEdgeStyleAttributes <- function(attrs) {
 #     else {
 #         V(g)$score <- 0
 #         V(g)$signal <- ""
-#         
+# 
 #     }
-#     
+# 
 #     if (!is.null(k.gene)) {
 #         pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
 #         if(is.null(gene.bum)){
 #             warnWrapper(gene.bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
 #         }
-#         
+# 
 #         if(gene.bum$a > 0.5) {
 #             E(g)$score <- 0
 #             warning("Edge scores have been assigned to 0 due to an inappropriate p-value distribution")
-#             
+# 
 #         } else {
 #             edge.threshold <- if (k.gene > length(pvalsToFit)) 1 else {
 #                 sort(pvalsToFit)[k.gene]
 #             }
-#             
+# 
 #             edge.threshold <- min(edge.threshold,
 #                                   BioNet::fdrThreshold(edge.threshold.min, gene.bum))
-#             
+# 
 #             gene.fdr <- gatom:::.reversefdrThreshold(edge.threshold, gene.bum)
-#             
+# 
 #             gatom:::.messagef("Gene p-value threshold: %f", edge.threshold)
 #             gatom:::.messagef("Gene BU alpha: %f", gene.bum$a)
 #             gatom:::.messagef("FDR for genes: %f", gene.fdr)
-#             
+# 
 #             E(g)$score <- with(edge.table,
 #                                (gene.bum$a - 1) *
 #                                    (log(gatom:::.replaceNA(pval, 1)) - log(edge.threshold)))
@@ -132,7 +132,7 @@ getJsEdgeStyleAttributes <- function(attrs) {
 #     if (raw) {
 #         return(g)
 #     }
-#     
+# 
 #     res <- normalize_sgmwcs_instance(g,
 #                                      nodes.weight.column = "score",
 #                                      edges.weight.column = "score",
@@ -143,50 +143,238 @@ getJsEdgeStyleAttributes <- function(attrs) {
 # }
 
 #' @import gatom
-scoreNetwork <- function(table, 
-                         k,
-                         threshold.min=0.1,
-                         bum=NULL,
-                         show.warnings=TRUE,
-                         raw=FALSE){
+getScoringParameters <- function(table, 
+                                 scoring.parameter=c("fdr", "k", "threshold"), 
+                                 scor.par.value,
+                                 bum=NULL,
+                                 threshold.min=0.1,
+                                 show.warnings=TRUE,
+                                 raw=FALSE){
     if (show.warnings) {
         warnWrapper <- identity
     } else {
         warnWrapper <- suppressWarnings
     }
     
-    if (!is.null(k)) {
-        pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        
-        if(is.null(bum)){
-            warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-        }
-        
-        if (bum$a <= 0.5) {
-            threshold <- if (k > length(pvalsToFit)) 1 else {
-                sort(pvalsToFit)[k]
-            }
-            
-            threshold <- min(threshold,
-                             BioNet::fdrThreshold(threshold.min, bum))
-            
-            fdr <- gatom:::.reversefdrThreshold(threshold, bum)
-            
-            res <- list(threshold = threshold,
-                        a = bum$a,
-                        fdr = fdr)
-        } else {
-            res <- list(threshold = NULL,
-                        a = bum$a,
-                        fdr = NULL)
-        }
-    } else {
-        res <- list(threshold = NULL,
-                    a = NULL,
-                    fdr = NULL)
+    if (is.null(scor.par.value)) {
+        return(list(threshold = NULL,
+                    k = NULL,
+                    fdr = NULL,
+                    signals = NULL))
     }
+    
+    pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+    signals <- length(pvalsToFit)
+    
+    if(is.null(bum)){
+        warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+    }
+    
+    if (bum$a > 0.5) {
+        return(list(threshold = NULL,
+                    k = NULL,
+                    fdr = NULL,
+                    signals = signals))
+    }
+    
+    if (scoring.parameter == "k") {
+        k <- scor.par.value
+        threshold <- if (k > length(pvalsToFit)) 1 else {
+            sort(pvalsToFit)[k]
+        }
+        
+        threshold <- min(threshold,
+                         BioNet::fdrThreshold(threshold.min, bum))
+    }
+    
+    if (scoring.parameter != "fdr"){
+        if (scoring.parameter == "threshold") {
+            threshold <- scor.par.value
+        }
+        fdr <- gatom:::.reversefdrThreshold(threshold, bum)
+    } else {
+        fdr <- scor.par.value
+        threshold <- BioNet::fdrThreshold(fdr, bum)
+    }
+    
+    if (scoring.parameter != "k"){
+        if (threshold > max(pvalsToFit)) {
+            k <- length(pvalsToFit) + 1
+        } else {
+            pvalsToFit <- sort(pvalsToFit)
+            k <- length(pvalsToFit[pvalsToFit <= threshold])
+        }
+    }
+    
+    res <- list(threshold = threshold,
+                k = k,
+                fdr = fdr,
+                signals = signals)
+    
     return(res)
 }
+
+
+
+# #' @import gatom
+# scoreNetworkFromK <- function(table, 
+#                               k,
+#                               bum=NULL,
+#                               threshold.min=0.1,
+#                               show.warnings=TRUE,
+#                               raw=FALSE){
+#     if (show.warnings) {
+#         warnWrapper <- identity
+#     } else {
+#         warnWrapper <- suppressWarnings
+#     }
+#     
+#     if (!is.null(k)) {
+#         pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+#         signals <- length(pvalsToFit)
+#         
+#         if(is.null(bum)){
+#             warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+#         }
+#         
+#         if (bum$a <= 0.5) {
+#             threshold <- if (k > length(pvalsToFit)) 1 else {
+#                 sort(pvalsToFit)[k]
+#             }
+#             
+#             threshold <- min(threshold,
+#                              BioNet::fdrThreshold(threshold.min, bum))
+#             
+#             fdr <- gatom:::.reversefdrThreshold(threshold, bum)
+#             
+#             res <- list(threshold = threshold,
+#                         k = k,
+#                         fdr = fdr,
+#                         signals = signals)
+#         } else {
+#             res <- list(threshold = NULL,
+#                         k = NULL,
+#                         fdr = NULL,
+#                         signals = signals)
+#         }
+#     } else {
+#         res <- list(threshold = NULL,
+#                     k = NULL,
+#                     fdr = NULL,
+#                     signals = NULL)
+#     }
+#     return(res)
+# }
+
+
+# #' @import gatom
+# scoreNetworkFromThreshold <- function(table, 
+#                                       threshold,
+#                                       bum=NULL,
+#                                       threshold.min=0.1,
+#                                       show.warnings=TRUE,
+#                                       raw=FALSE){
+#     if (show.warnings) {
+#         warnWrapper <- identity
+#     } else {
+#         warnWrapper <- suppressWarnings
+#     }
+#     
+#     if (is.null(threshold)) {
+#         return(list(threshold = NULL,
+#                     k = NULL,
+#                     fdr = NULL,
+#                     signals = NULL))
+#     }
+#     
+#     pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+#     signals <- length(pvalsToFit)
+#     
+#     if(is.null(bum)){
+#         warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+#     }
+#     
+#     if (bum$a > 0.5) {
+#         return(list(threshold = NULL,
+#                     k = NULL,
+#                     fdr = NULL,
+#                     signals = signals))
+#     }
+#     
+#     fdr <- gatom:::.reversefdrThreshold(threshold, bum)
+#     
+#     if (threshold > max(pvalsToFit)) {
+#         k <- length(pvalsToFit) + 1
+#     } else {
+#         pvalsToFit <- sort(pvalsToFit)
+#         k <- length(pvalsToFit[pvalsToFit <= threshold])
+#     }
+#     
+#     res <- list(threshold = threshold,
+#                 k = k,
+#                 fdr = fdr,
+#                 signals = signals)
+#     
+#     
+#     return(res)
+# }
+
+
+# #' @import gatom
+# scoreNetworkFromFDR <- function(table, 
+#                                 fdr,
+#                                 bum=NULL,
+#                                 threshold.min=0.1,
+#                                 show.warnings=TRUE,
+#                                 raw=FALSE){
+#     if (show.warnings) {
+#         warnWrapper <- identity
+#     } else {
+#         warnWrapper <- suppressWarnings
+#     }
+#     
+#     if (!is.null(fdr)) {
+#         pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+#         signals <- length(pvalsToFit)
+#         
+#         if(is.null(bum)){
+#             warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+#         }
+#         
+#         if (bum$a <= 0.5) {
+#             # threshold <- if (k > length(pvalsToFit)) 1 else {
+#             #     sort(pvalsToFit)[k]
+#             # }
+#             
+#             threshold <- BioNet::fdrThreshold(fdr, bum)
+#             
+#             # fdr <- gatom:::.reversefdrThreshold(threshold, bum)
+#             
+#             if (threshold > max(pvalsToFit)) {
+#                 k <- length(pvalsToFit) + 1
+#             } else {
+#                 pvalsToFit <- sort(pvalsToFit)
+#                 k <- length(pvalsToFit[pvalsToFit <= threshold])
+#             }
+#             
+#             res <- list(threshold = threshold,
+#                         k = k,
+#                         fdr = fdr,
+#                         signals = signals)
+#         } else {
+#             res <- list(threshold = NULL,
+#                         k = NULL,
+#                         fdr = NULL,
+#                         signals = signals)
+#         }
+#     } else {
+#         res <- list(threshold = NULL,
+#                     k = NULL,
+#                     fdr = NULL,
+#                     signals = NULL)
+#     }
+#     return(res)
+# }
 
 #' @import gatom
 scoreGraphShiny <- function(g, k.gene, k.met,
@@ -274,7 +462,7 @@ prepareForShinyCyJS <- function(module, layout=list(name = "cose", animate = FAL
 
 
 #' @import gatom
-fitToBUM <- function(table, k, show.warnings=TRUE
+fitToBUM <- function(table, show.warnings=TRUE
 ) {
     if (show.warnings) {
         warnWrapper <- identity
@@ -282,13 +470,9 @@ fitToBUM <- function(table, k, show.warnings=TRUE
         warnWrapper <- suppressWarnings
     }
     
-    if (!is.null(k)) {
-        pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-        warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
-        res <- bum
-    } else {
-        return(NULL)
-    }
+    pvalsToFit <- table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
+    warnWrapper(bum <- BioNet::fitBumModel(pvalsToFit[pvalsToFit > 0], plot = F))
+    res <- bum
     res
 }
 

@@ -101,7 +101,7 @@ test_that("Metabolites are fitted to BUM", {
                                                             package="gatom"))$ID)
     k.met <- 25
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
-    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    met.bum <- fitToBUM(table=vertex.table)
     expect_true(!is.null(met.bum$lambda) && !is.null(met.bum$a))
 })
 
@@ -123,7 +123,7 @@ test_that("Genes are fitted to BUM", {
                                                             package="gatom"))$ID)
     k.gene <- 25
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
+    gene.bum <- fitToBUM(table=edge.table)
     expect_true(!is.null(gene.bum$lambda) && !is.null(gene.bum$a))
 })
 
@@ -148,13 +148,15 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
 
 
     k.met <- 25
-    k.gene <- 25
+    k.gene <- 50
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
-    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    met.bum <- fitToBUM(table=vertex.table)
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
-    gene.scores <- scoreNetwork(table=edge.table, k=k.gene, bum=gene.bum)
-    met.scores <- scoreNetwork(table=vertex.table, k=k.met, bum=met.bum)
+    gene.bum <- fitToBUM(table=edge.table)
+    gene.scores <- getScoringParameters(table=edge.table, scoring.parameter="k", 
+                                        scor.par.value=k.gene, bum=gene.bum)
+    met.scores <- getScoringParameters(table=vertex.table, scoring.parameter="k", 
+                                       scor.par.value=k.met, bum=met.bum)
     
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
                           metabolite.bum=met.bum, gene.bum=gene.bum,
@@ -187,11 +189,13 @@ test_that("Graph is scored when k.gene is NULL", {
     k.met <- 25
     k.gene <- NULL
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
-    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    met.bum <- fitToBUM(table=vertex.table)
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
-    gene.scores <- scoreNetwork(table=edge.table, k=k.gene, bum=gene.bum)
-    met.scores <- scoreNetwork(table=vertex.table, k=k.met, bum=met.bum)
+    gene.bum <- fitToBUM(table=edge.table)
+    gene.scores <- getScoringParameters(table=edge.table, scoring.parameter="k", 
+                                        scor.par.value=k.gene, bum=gene.bum)
+    met.scores <- getScoringParameters(table=vertex.table, scoring.parameter="k", 
+                                       scor.par.value=k.met, bum=met.bum)
     
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
                           metabolite.bum=met.bum, gene.bum=gene.bum,
@@ -223,11 +227,13 @@ test_that("Graph is scored when k.met is NULL", {
     k.met <- NULL
     k.gene <- 25
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
-    met.bum <- fitToBUM(table=vertex.table, k=k.met)
+    met.bum <- fitToBUM(table=vertex.table)
     edge.table <- data.table(as_data_frame(g, what="edges"))
-    gene.bum <- fitToBUM(table=edge.table, k=k.gene)
-    gene.scores <- scoreNetwork(table=edge.table, k=k.gene, bum=gene.bum)
-    met.scores <- scoreNetwork(table=vertex.table, k=k.met, bum=met.bum)
+    gene.bum <- fitToBUM(table=edge.table)
+    gene.scores <- getScoringParameters(table=edge.table, scoring.parameter="k", 
+                                        scor.par.value=k.gene, bum=gene.bum)
+    met.scores <- getScoringParameters(table=vertex.table, scoring.parameter="k", 
+                                       scor.par.value=k.met, bum=met.bum)
     
     sg <- scoreGraphShiny(g=g, k.gene=k.gene, k.met=k.met,
                           metabolite.bum=met.bum, gene.bum=gene.bum,
