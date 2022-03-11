@@ -323,3 +323,14 @@ function loadGraph(container, graph) {
 
 }
 
+shinyjs.SelectPathway = function(v){
+    var vv = v;
+    cy.edges().filter(vv[0]).select()
+    return ;
+}
+
+shinyjs.UnSelectPathway = function(){
+    cy.elements(':selected').unselect()
+    return ;
+}
+

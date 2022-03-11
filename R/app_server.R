@@ -2,6 +2,7 @@
 #' @import data.table
 #' @import logging
 #' @import openxlsx
+#' @import shinyjs
 app_server <- function(config_file) {
     
     conf <- config::get(file=config_file, use_parent = FALSE)
@@ -175,7 +176,7 @@ app_server <- function(config_file) {
             gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
 
             res <- prepareDE(gene.de.raw, gene.de.meta)
-            res[, signalRank := NULL] # todo
+            # res[, signalRank := NULL] # todo
 
             logdebug(capture.output(str(res)))
             if (!all(necessary.gene.de.fields %in% names(res))) {
@@ -230,6 +231,8 @@ app_server <- function(config_file) {
             if (is.null(data)) {
                 return(NULL)
             }
+            
+            data[, signalRank := NULL]
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
 
@@ -283,7 +286,6 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             notMapped <- notMappedGenes()
-            # network <- getNetwork()
             org.gatom.anno <- getAnnotation()
             
             div(
@@ -319,7 +321,6 @@ app_server <- function(config_file) {
             
             data <- data[order(pval)]
             not.mapped.data <- data[ID %in% notMapped]
-            # not.mapped.data <- NotMappedGeneData()
             format(as.data.frame(head(not.mapped.data, n=20)), digits=3)
         })
         outputOptions(output, "geneDENotMappedTable", suspendWhenHidden = FALSE)
@@ -394,12 +395,6 @@ app_server <- function(config_file) {
                 loginfo("not all fields in DE file: %s", input$metDE$datapath)
                 stop(paste0("Metabolic differential expression data should contain at least these fields: ",
                             paste(necessary.met.de.fields, collapse=", ")))
-                # if (grepl("xlsx?$", input$metDE$name)) {
-                #     stop("We do not support excel files yet, please, use tab-separated files instead")
-                # } else {
-                #     stop(paste0("Metabolic differential expression data should contain at least these fields: ",
-                #                 paste(necessary.met.de.fields, collapse=", ")))
-                # }
             }
 
             attr(res, "name") <- attr(met.de.raw, "name")
@@ -460,6 +455,7 @@ app_server <- function(config_file) {
             if (is.null(data)) {
                 return(NULL)
             }
+            data[, signalRank := NULL]
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
         
@@ -649,9 +645,9 @@ app_server <- function(config_file) {
                                         keepReactionsWithoutEnzymes = keepReactionsWithoutEnzymes,
                                         gene2reaction.extra = gene2reaction.extra)
 
-                if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
-                    g <- simplify(g, remove.multiple = T)
-                }
+                # if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
+                #     g <- simplify(g, remove.multiple = T)
+                # }
                 
                 attr(g, "tag") <- tag
                 g$organism <- isolate(input$organism)
@@ -677,7 +673,8 @@ app_server <- function(config_file) {
 
             if (is.null(gene.de)) {
                 return(NULL)
-            } else if (input$nullkgene) {
+            }
+            if (input$nullkgene) {
                 return(NULL)
             }
             input$kgene
@@ -744,7 +741,12 @@ app_server <- function(config_file) {
             if (is.null(g)) {
                 return(NULL)
             }
-
+            
+            gene.de <- geneDEInput()
+            if (is.null(gene.de)) {
+                return(NULL)
+            }
+            
             if (is.null(input$kgene) & is.null(input$thresholdgene) & is.null(input$fdrgene)) {
                 return(NULL)
             }
@@ -759,6 +761,11 @@ app_server <- function(config_file) {
         metBUM <- reactive({
             g <- gInput()
             if (is.null(g)) {
+                return(NULL)
+            }
+            
+            met.de <- metDEInput()
+            if (is.null(met.de)) {
                 return(NULL)
             }
 
@@ -868,14 +875,10 @@ app_server <- function(config_file) {
 
             if (gene.bum$a > 0.5) {
                 div(
-                    # p(sprintf("Gene BU alpha: %s", round(gene.bum$a, 6))),
-                    # p(sprintf("Amount of gene signals: %s", round(scores$signals, 0))),
                     p(sprintf("Edge scores have been assigned to 0 due to an inappropriate p-value distribution"))
                 )
             } else {
                 div(
-                    # p(sprintf("Gene BU alpha: %s", round(gene.bum$a, 6))),
-                    # p(sprintf("Amount of gene signals: %s", round(scores$signals, 0))),
                     p(sprintf("Number of positive genes: %s", round(scores$k, 0))),
                     p(sprintf("Gene p-value threshold: %s", round(scores$threshold, 6))),
                     p(sprintf("FDR for genes: %s", round(scores$fdr, 6)))
@@ -976,14 +979,10 @@ app_server <- function(config_file) {
 
             if (met.bum$a > 0.5) {
                 div(
-                    # p(sprintf("Metabolite BU alpha: %s", round(met.bum$a, 6))),
-                    # p(sprintf("Amount of metabolite signals: %s", round(scores$signals, 0))),
                     p(sprintf("Node scores have been assigned to 0 due to an inappropriate p-value distribution"))
                 )
             } else {
                 div(
-                    # p(sprintf("Metabolite BU alpha: %s", round(met.bum$a, 6))),
-                    # p(sprintf("Amount of metabolite signals: %s", round(scores$signals, 0))),
                     p(sprintf("Number of positive metabolites: %s", round(scores$k, 0))),
                     p(sprintf("Metabolite p-value threshold: %s", round(scores$threshold, 6))),
                     p(sprintf("FDR for metabolites: %s", round(scores$fdr, 6)))
@@ -1056,11 +1055,18 @@ app_server <- function(config_file) {
             res
         })
         
-        output$showModulePanel <- renderJs({
-            if (!is.null(gInput())) { return("mp = $('#scoring-panel'); mp[0].scrollIntoView();")
+        output$showScoringPanel <- renderJs({
+            if (!is.null(gInput())) { return("$('#scoring-panel')[0].scrollIntoView()")
             }
             return("")
         })
+        
+        output$showModulePanel <- renderJs({
+            if (!is.null(moduleInput())) { return("$('#module-panel')[0].scrollIntoView()")
+            }
+            return("")
+        })
+        
         
         getSolver <- reactive({
             g <- gInput()
@@ -1101,14 +1107,14 @@ app_server <- function(config_file) {
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
             
-            gen.bum <- genBUM()
-            met.bum <- metBUM()
+            gene.bum <- genBUM()
+            metabolite.bum <- metBUM()
             
             gen.scores <- genesScoring()
             met.scores <- metsScoring()
             
             res <- scoreGraphShiny(g=g, k.gene=gen.scores$k, k.met=met.scores$k,
-                                   metabolite.bum=met.bum, gene.bum=gen.bum,
+                                   metabolite.bum=metabolite.bum, gene.bum=gene.bum,
                                    vertex.threshold=met.scores$threshold,
                                    edge.threshold=gen.scores$threshold
             )
@@ -1141,7 +1147,10 @@ app_server <- function(config_file) {
                     stop("No module found")
                 }
                 res$description.string <- gScored$description.string
+                # # delete
+                # save(res, file="../module_errors.Rda")
                 res
+                
             }, finally=longProcessStop())
         })
         
@@ -1150,6 +1159,9 @@ app_server <- function(config_file) {
             if (is.null(module)) {
                 return(NULL)
             }
+            
+            # # delete
+            # save(module, file="../module_errors.Rda")
             
             # for consistency
             module <- remove.vertex.attribute(module, "score")
@@ -1194,8 +1206,6 @@ app_server <- function(config_file) {
         })
         
         output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput()))
-
-        # afterCall()
 
         output$downloadNetwork <- downloadHandler(
             filename = reactive({ paste0("network.", tolower(gInput()$organism), ".xgmml")}),
@@ -1257,15 +1267,10 @@ app_server <- function(config_file) {
 
                 metTable <- data.table(as_data_frame(g, what="vertices"))
                 rxnTable <- data.table(as_data_frame(g, what="edges"))
-
-                # metTable <- removeNAColumns(metTable)
-                # rxnTable <- removeNAColumns(rxnTable)
-
-                # addDataFrame(metTable, createSheet(wb, "metabolites"), row.names=F)
+                
                 addWorksheet(wb, "metabolites")
                 writeData(wb, "metabolites", metTable, row.names=F)
-
-                # addDataFrame(rxnTable, createSheet(wb, "reactions"), row.names=F)
+                
                 addWorksheet(wb, "reactions")
                 writeData(wb, "reactions", rxnTable, row.names=F)
 
@@ -1305,20 +1310,59 @@ app_server <- function(config_file) {
             p(paste("gatom version:", packageVersion("gatom")))
         })
         
-        output$pathwaysParameters <- reactive({
-            input$findPathways
-
-            makeJsAssignments(
-                pathways.show = TRUE
-            )
+        
+        observeEvent(input$findPathways, {
+            
+            output$pathwaysParameters <- reactive({
+                    makeJsAssignments(
+                        pathways.show = TRUE
+                    )
+                })
         })
 
         output$showPathwaysPanel <- renderJs({
             if (input$findPathways) {
-                return("mp = $('#pathway-panel'); mp[0].scrollIntoView();")
+                return("setTimeout(() => $('#pathway-panel')[0].scrollIntoView(), 50)")
             }
             return("")
         })
+        
+        
+        pathwaysInput <- reactive({
+            m <- moduleInput()
+            if (is.null(m)) {
+                return(NULL)
+            }
+
+            g <- gInput()
+            if (is.null(g)) {
+                return(NULL)
+            }
+
+            org.gatom.anno <- getAnnotation()
+
+            foraRes <- fgsea::fora(pathways=org.gatom.anno$pathways,
+                                   genes=E(m)$gene,
+                                   universe=unique(E(g)$gene),
+                                   minSize=5)
+            res <- foraRes[padj < 0.05]
+# 
+#             if (input$collapsePathways) {
+#                 mainPathways <- fgsea::collapsePathwaysORA(
+#                     res,
+#                     pathways=org.gatom.anno$pathways,
+#                     genes=E(m)$gene,
+#                     universe=unique(E(g)$gene))
+# 
+#                 res <- foraRes[pathway %in% mainPathways$mainPathways]
+#             }
+            
+            # delete
+            # save(res, file="../large_module_pathways.Rda")
+            
+            res
+        })
+
 
         output$pathwaysTable <- renderTable({
             m <- moduleInput()
@@ -1331,26 +1375,59 @@ app_server <- function(config_file) {
                 return(NULL)
             }
 
-            org.Mm.eg.gatom.anno <- lazyReadRDS("org.Mm.eg.gatom.anno",
-                                                conf$path.to.org.Mm.eg.gatom.anno)
-
-            foraRes <- fgsea::fora(pathways=org.Mm.eg.gatom.anno$pathways,
-                                   genes=E(m)$gene,
-                                   universe=unique(E(g)$gene),
-                                   minSize=5)
-            res <- foraRes[padj < 0.05]
-
-            if (input$collapsePathways) {
-                    mainPathways <- fgsea::collapsePathwaysORA(
-                        res,
-                        pathways=org.Mm.eg.gatom.anno$pathways,
-                        genes=E(m)$gene,
-                        universe=unique(E(g)$gene))
-                        res <- foraRes[pathway %in% mainPathways$mainPathways]
-            }
+            res <- pathwaysInput()
             format(as.data.frame(res), digits=3)
         })
 
+        observe({
+            pathways <- pathwaysInput()
+            
+            pathwayChoices <- c("None", pathways$pathway)
+            pathwayChoices <- as.character(pathwayChoices)
+            names(pathwayChoices) <- pathwayChoices
+            
+            updateSelectInput(session, "selectPathway",
+                              choices = pathwayChoices,
+                              selected = "None")
+        })
+
+        pathwaySelection <- reactive({
+            input$selectPathway
+        })
+
+        observeEvent(input$selectPathway, {
+            selectedPath <- pathwaySelection()
+
+            if (selectedPath != "None") {
+                js$UnSelectPathway()
+
+                m <- moduleInput()
+                if (is.null(m)) {
+                    return(NULL)
+                }
+
+                edge.table <- as_data_frame(m, what="edges")
+                edge.table <- as.data.table(edge.table)
+                edge.table <- edge.table[, gene:=as.character(gene)]
+                edge.table <- as.data.frame(edge.table)
+
+                pathways <- pathwaysInput()
+                data <- pathways[pathways$pathway == selectedPath]
+                overlapGenes <- unlist(data$overlapGenes)
+                # ids <- row.names(edge.table[edge.table$gene %in% overlapGenes, ])
+                # ids <- as.numeric(ids)
+
+                genesToSelect <- edge.table[edge.table$gene %in% overlapGenes, ]
+                genesToSelect <- genesToSelect$label
+
+                Edges <- paste0('[label = "', genesToSelect, '"]', collapse = ",")
+                js$SelectPathway(Edges)
+
+            } else {
+                js$UnSelectPathway()
+            }
+        })
+        
         output$GAMVersion <- renderUI({
             p(paste("GAM version:", sessionInfo()$otherPkgs$GAM$Revision))
         })

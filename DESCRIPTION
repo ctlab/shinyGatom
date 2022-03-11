@@ -25,5 +25,6 @@ Imports:
     config,
     gatom,
     openxlsx,
-    fgsea
+    fgsea,
+    shinyjs
 

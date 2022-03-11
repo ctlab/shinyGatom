@@ -1,7 +1,6 @@
 default:
     example.gene.de.path: "https://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.gene.de.tsv"
     example.met.de.path:  "https://artyomovlab.wustl.edu/publications/supp_materials/GAM/Ctrl.vs.MandLPSandIFNg.met.de.tsv"
-    example.lip.de.path:  "https://artyomovlab.wustl.edu/publications/supp_materials/GATOM/ST27.lip.de.tsv"
 
     vizmap.url: "https://artyomovlab.wustl.edu/publications/supp_materials/GAM/GAM_VizMap.xml"
 
@@ -27,7 +26,7 @@ default:
 local:
     example.gene.de.path:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.gene.de.tsv")
     example.met.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.MandLPSandIFNg.met.de.tsv")
-    example.lip.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "ST27.lip.de.tsv")
+    example.lip.de.path:          !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "Ctrl.vs.HighFat.lipid.de.csv")
 
     path.to.kegg.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.kegg.rds")
     path.to.rhea.network:         !expr file.path(Sys.getenv("GATOM_LOCAL_DATA", "data"), "network.rhea.rds")

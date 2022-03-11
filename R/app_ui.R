@@ -13,10 +13,12 @@ myMainPanel <- function(...) {
 }
 
 #' @import shinyCyJS
+#' @import shinyjs
 app_ui <- function(config_file) {
     conf <- config::get(file=config_file, use_parent = FALSE)
 
     function(request) {
+        
         workPanel <- tagList(
             fixedRow(
                 mySidebarPanel(
@@ -233,7 +235,12 @@ app_ui <- function(config_file) {
                                                        "None" = "NoAction"),
                                                      selected="NoAction")
 
-                        )
+                        ),
+                        selectInput("selectPathway",
+                                    label="Select a pathway to highlight",
+                                    choices = c("None" = "None"),
+                                    selected="NoAction"),
+                        actionLink("findPathways", "Show pathway enrichment details")
                     ),
                     conditionalPanel("module.available",
                                      h3("Module summary"),
@@ -257,9 +264,6 @@ app_ui <- function(config_file) {
                 ),
                 myMainPanel(
                     h3("Module"),
-                    conditionalPanel("module.available",
-                                     myActionButton("findPathways", "Show main pathways")
-                    ),
                     ShinyCyJSOutput(outputId = 'module', width = "100%", height = "100vh")
                 )
             ),
@@ -267,14 +271,20 @@ app_ui <- function(config_file) {
                          div(id="pathway-panel", class="row top-buffer",
                              div(class="sidebar col-sm-3",
                                  h3(""),
-                                 wellPanel(
-                                     checkboxInput("collapsePathways",
-                                                   label="Collapse pathways",
-                                                   value=FALSE)
-                                 )
+                                 # wellPanel(
+                                 #     h3("Pathways postprocessing")#,
+                                 #     # selectInput("selectPathway",
+                                 #     #             label="Select a pathway to highlight",
+                                 #     #             choices = c("None" = "None"),
+                                 #     #             selected="NoAction")
+                                 #     # checkboxInput("collapsePathways",
+                                 #     #               label="Collapse pathways",
+                                 #     #               value=FALSE),
+                                 #     
+                                 # )
                              ),
                              myMainPanel(
-                                 h3("Pathway annotation"),
+                                 h3("Pathway enrichment details"),
                                  uiOutput("pathwaysTable")
                              )
                          )
@@ -290,6 +300,11 @@ app_ui <- function(config_file) {
 
         fluidPage(
             fluidPage(
+                shinyjs::useShinyjs(),
+                includeScript(system.file("shinyjs.js", package="shinyGatom")),
+                shinyjs::extendShinyjs(
+                    script = "shinyjs.js",
+                    functions = c('SelectPathway', 'UnSelectPathway')),
                 tags$head(
                     # tags$script(src = "www/cytoscape-panzoom.js"),
                     # tags$link(rel="stylesheet", type="text/css", href="www/cytoscape.js-panzoom.css"),
