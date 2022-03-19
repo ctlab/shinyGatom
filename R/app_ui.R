@@ -104,7 +104,6 @@ app_ui <- function(config_file) {
                     div(class="DEBlock",
                         h3("Differential expression for genes"),
                         uiOutput("geneDESummary"),
-                        # uiOutput("geneDEColumns"),
                         uiOutput("geneDETable"),
                         uiOutput("geneDENotMapped"),
                         uiOutput("geneDENotMappedTable")
@@ -192,7 +191,6 @@ app_ui <- function(config_file) {
                     conditionalPanel(
                         "network.available",
                         downloadButton("downloadNetwork", "Download XGMML"),
-                        # # :todo: rework the UI and uncomment
                         h3("Scoring"),
                         div(id="bum-plots",
                             conditionalPanel("network.hasGenes",
