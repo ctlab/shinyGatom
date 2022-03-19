@@ -1271,8 +1271,8 @@ app_server <- function(config_file) {
 
                 wb <- createWorkbook()
 
-                metTable <- data.table(as_data_frame(g, what="vertices"))
-                rxnTable <- data.table(as_data_frame(g, what="edges"))
+                metTable <- data.table(as_data_frame(module, what="vertices"))
+                rxnTable <- data.table(as_data_frame(module, what="edges"))
                 
                 addWorksheet(wb, "metabolites")
                 writeData(wb, "metabolites", metTable, row.names=F)
