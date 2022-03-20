@@ -174,7 +174,7 @@ app_server <- function(config_file) {
 
             org.gatom.anno <- getAnnotation()
             gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
-
+            
             res <- prepareDE(gene.de.raw, gene.de.meta)
             # res[, signalRank := NULL] # todo
 
@@ -232,7 +232,9 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            data[, signalRank := NULL]
+            if ("signalRank" %in% colnames(data)){
+                data[ , signalRank := NULL]
+            }
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
 
@@ -455,7 +457,10 @@ app_server <- function(config_file) {
             if (is.null(data)) {
                 return(NULL)
             }
-            data[, signalRank := NULL]
+            
+            if ("signalRank" %in% colnames(data)){
+                data[ , signalRank := NULL]
+            }
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
         
@@ -588,40 +593,40 @@ app_server <- function(config_file) {
         gInput <- reactive({
             input$preprocess
             loginfo("Preprocessing")
-
+            
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
-
+            
             if (is.null(gene.de) && is.null(met.de)) {
                 return(NULL)
             }
-
+            
             network <- isolate(getNetwork())
             gene.ids <- isolate(geneIdsType())
             met.ids <- isolate(metIdsType())
             tag <- isolate(experimentTag())
-
+            
             
             longProcessStart()
             
             tryCatch({
                 
                 topology <- isolate(input$nodesAs)
-                org.gatom.anno <- getAnnotation()
+                org.gatom.anno <- isolate(getAnnotation())
                 keepReactionsWithoutEnzymes <- FALSE
                 gene2reaction.extra <- NULL
-
+                
                 if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
                     met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                                 path = conf$path.to.met.lipid.db)
                     met.db <- met.lipid.db
-
+                    
                     if (isolate(input$loadExampleLipidDE)) {
                         gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]], colClasses="character"))[gene != "-"]
                     } else {
                         gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]], colClasses="character"))[gene != "-"]
                     }
-
+                    
                     topology <- "metabolites"
                     keepReactionsWithoutEnzymes <- TRUE
                 } else if (isolate(input$network) == "kegg"){
@@ -633,7 +638,7 @@ app_server <- function(config_file) {
                                                path = conf$path.to.met.rhea.db)
                     met.db <- met.rhea.db
                 }
-
+                
                 g <- makeMetabolicGraph(network=network,
                                         topology=topology,
                                         org.gatom.anno=org.gatom.anno,
@@ -644,16 +649,13 @@ app_server <- function(config_file) {
                                                                         package="gatom"))$ID,
                                         keepReactionsWithoutEnzymes = keepReactionsWithoutEnzymes,
                                         gene2reaction.extra = gene2reaction.extra)
-
-                # if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
-                #     g <- simplify(g, remove.multiple = T)
-                # }
                 
                 attr(g, "tag") <- tag
                 g$organism <- isolate(input$organism)
                 g
             }, finally=longProcessStop())
         })
+        
         
         output$networkSummary <- reactive({
             g <- gInput()
@@ -669,7 +671,8 @@ app_server <- function(config_file) {
         
         
         kGene <- reactive({
-            gene.de <- geneDEInput()
+            input$preprocess
+            gene.de <- isolate(geneDEInput())
 
             if (is.null(gene.de)) {
                 return(NULL)
@@ -681,7 +684,8 @@ app_server <- function(config_file) {
         })
 
         thresholdGene <- reactive({
-            gene.de <- geneDEInput()
+            input$preprocess
+            gene.de <- isolate(geneDEInput())
 
             if (is.null(gene.de)) {
                 return(NULL)
@@ -692,7 +696,8 @@ app_server <- function(config_file) {
         })
 
         fdrGene <- reactive({
-            gene.de <- geneDEInput()
+            input$preprocess
+            gene.de <- isolate(geneDEInput())
 
             if (is.null(gene.de)) {
                 return(NULL)
@@ -704,7 +709,8 @@ app_server <- function(config_file) {
 
 
         kMet <- reactive({
-            met.de <- metDEInput()
+            input$preprocess
+            met.de <- isolate(metDEInput())
             
             if (is.null(met.de)) {
                 return(NULL)
@@ -715,7 +721,8 @@ app_server <- function(config_file) {
         })
         
         thresholdMet <- reactive({
-            met.de <- metDEInput()
+            input$preprocess
+            met.de <- isolate(metDEInput())
             
             if (is.null(met.de)) {
                 return(NULL)
@@ -726,7 +733,8 @@ app_server <- function(config_file) {
         })
 
         fdrMet <- reactive({
-            met.de <- metDEInput()
+            input$preprocess
+            met.de <- isolate(metDEInput())
 
             if (is.null(met.de)) {
                 return(NULL)
@@ -742,7 +750,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            gene.de <- geneDEInput()
+            gene.de <- isolate(geneDEInput())
             if (is.null(gene.de)) {
                 return(NULL)
             }
@@ -764,7 +772,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             
-            met.de <- metDEInput()
+            met.de <- isolate(metDEInput())
             if (is.null(met.de)) {
                 return(NULL)
             }
@@ -780,8 +788,6 @@ app_server <- function(config_file) {
         })
         
         
-        ## :todo: rework the UI and uncomment
-
         genesScoring <- reactive({
             g <- gInput()
             if (is.null(g)) {
@@ -834,7 +840,7 @@ app_server <- function(config_file) {
             pvalsToFit <- edge.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
 
             div(
-                p(sprintf("Gene BU alpha: %s", round(gene.bum$a, 6))),
+                p(sprintf("Gene BU alpha: %.3g", gene.bum$a)),
                 p(sprintf("Amount of gene signals: %s", length(pvalsToFit)))
             )
         })
@@ -880,8 +886,8 @@ app_server <- function(config_file) {
             } else {
                 div(
                     p(sprintf("Number of positive genes: %s", round(scores$k, 0))),
-                    p(sprintf("Gene p-value threshold: %s", round(scores$threshold, 6))),
-                    p(sprintf("FDR for genes: %s", round(scores$fdr, 6)))
+                    p(sprintf("Gene p-value threshold: %.1g", scores$threshold)),
+                    p(sprintf("FDR for genes: %.1g", scores$fdr))
                 )
             }
         })
@@ -936,9 +942,9 @@ app_server <- function(config_file) {
             }
 
             pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-
+            
             div(
-                p(sprintf("Metabolite BU alpha: %s", round(met.bum$a, 6))),
+                p(sprintf("Metabolite BU alpha: %.3g", met.bum$a)),
                 p(sprintf("Amount of metabolite signals: %s", length(pvalsToFit)))
             )
         })
@@ -984,52 +990,57 @@ app_server <- function(config_file) {
             } else {
                 div(
                     p(sprintf("Number of positive metabolites: %s", round(scores$k, 0))),
-                    p(sprintf("Metabolite p-value threshold: %s", round(scores$threshold, 6))),
-                    p(sprintf("FDR for metabolites: %s", round(scores$fdr, 6)))
+                    p(sprintf("Metabolite p-value threshold: %.1g", scores$threshold)),
+                    p(sprintf("FDR for metabolites: %.1g", scores$fdr))
                 )
             }
         })
         
         
-        output$networkParameters <- reactive({
-            g <- NULL
-            tryCatch({
-                g <- gInput()
-            }, error=function(e) {})
+        
+        observeEvent(input$preprocess, {
             
-            if (is.null(g)) {
-                return("")
-            }
-            
-            gene.de <- isolate(geneDEInput())
-            met.de <- isolate(metDEInput())
-            
-            has.genes <- FALSE
-            has.mets <- FALSE
-            
-            if (!is.null(gene.de)) {
-                has.genes <- TRUE
-            }
-            if (!is.null(met.de)) {
-                has.mets <- TRUE
-            }
-            
-            res <- paste0(
-                makeJsAssignments(
-                    network.available = TRUE,
-                    network.hasGenes = has.genes,
-                    network.hasMets = has.mets
+            output$networkParameters <- reactive({
+                g <- NULL
+                tryCatch({
+                    g <- isolate(gInput())
+                }, error=function(e) {})
+                
+                if (is.null(g)) {
+                    return("")
+                }
+                
+                gene.de <- isolate(geneDEInput())
+                met.de <- isolate(metDEInput())
+                
+                has.genes <- FALSE
+                has.mets <- FALSE
+                
+                if (!is.null(gene.de)) {
+                    has.genes <- TRUE
+                }
+                if (!is.null(met.de)) {
+                    has.mets <- TRUE
+                }
+                
+                res <- paste0(
+                    makeJsAssignments(
+                        network.available = TRUE,
+                        network.hasGenes = has.genes,
+                        network.hasMets = has.mets
+                    )
                 )
-            )
-            
-            
-            if (isolate(input$autoFindModule)) {
-                res <- paste0(res, '$("#find").trigger("click");')
-            }
-            
-            res <- paste0(res, '$("#find").removeAttr("disabled").addClass("btn-default");')
-            res
+                
+                
+                if (isolate(input$autoFindModule)) {
+                    res <- paste0(res, '$("#find").trigger("click");')
+                }
+                
+                res <- paste0(res, '$("#find").removeAttr("disabled").addClass("btn-default");')
+                res
+            })
         })
+        
         
         output$enableMakeNetwork <- renderJs({
             res <- ""
@@ -1147,8 +1158,6 @@ app_server <- function(config_file) {
                     stop("No module found")
                 }
                 res$description.string <- gScored$description.string
-                # # delete
-                # save(res, file="../module_errors.Rda")
                 res
                 
             }, finally=longProcessStop())
@@ -1159,9 +1168,6 @@ app_server <- function(config_file) {
             if (is.null(module)) {
                 return(NULL)
             }
-            
-            # # delete
-            # save(module, file="../module_errors.Rda")
             
             # for consistency
             module <- remove.vertex.attribute(module, "score")
@@ -1265,8 +1271,8 @@ app_server <- function(config_file) {
 
                 wb <- createWorkbook()
 
-                metTable <- data.table(as_data_frame(g, what="vertices"))
-                rxnTable <- data.table(as_data_frame(g, what="edges"))
+                metTable <- data.table(as_data_frame(module, what="vertices"))
+                rxnTable <- data.table(as_data_frame(module, what="edges"))
                 
                 addWorksheet(wb, "metabolites")
                 writeData(wb, "metabolites", metTable, row.names=F)
@@ -1356,9 +1362,6 @@ app_server <- function(config_file) {
 # 
 #                 res <- foraRes[pathway %in% mainPathways$mainPathways]
 #             }
-            
-            # delete
-            # save(res, file="../large_module_pathways.Rda")
             
             res
         })
