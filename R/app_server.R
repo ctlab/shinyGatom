@@ -4,11 +4,11 @@
 #' @import openxlsx
 #' @import shinyjs
 app_server <- function(config_file) {
-    
+
     conf <- config::get(file=config_file, use_parent = FALSE)
-    
+
     function(input, output, session) {
-        
+
         networks <- list(
             "kegg" = "network.kegg",
             "rhea" = "network.rhea",
@@ -20,7 +20,7 @@ app_server <- function(config_file) {
             "rhea" = conf$path.to.rhea.network,
             "lipidomic" = conf$path.to.lipid.network
         )
-        
+
         annotations <- list(
             "mmu" = "org.Mm.eg.gatom.anno",
             "hsa" = "org.Hs.eg.gatom.anno",
@@ -51,31 +51,31 @@ app_server <- function(config_file) {
 
         v.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=240)
         attr(v.solver, "description") <- "Virgo Solver (time limit = 4m)"
-        
+
         # v2.solver <- virgo_solver(cplex_dir=NULL, timelimit=30)
         v2.solver <- virgo_solver(cplex_dir=Sys.getenv("CPLEX_HOME"), penalty=0.01, timelimit=30)
         attr(v2.solver, "description") <- "Virgo Solver (time limit = 30s)"
-        
+
 
         longProcessStart <- function() {
             session$sendCustomMessage(type='showWaitMessage', list(value=T))
         }
-        
+
         longProcessStop <- function() {
             session$sendCustomMessage(type='showWaitMessage', list(value=F))
         }
-        
+
         output$initialized <- renderJs('$("#initializing").hide()')
-        
+
         queryValues <- reactiveValues()
-        
+
         observe({
             query <- parseQueryString(session$clientData$url_search)
             if ("organism" %in% names(query)) {
                 updateSelectInput(session, "network", selected=query$organism)
                 #values$queryOrganism <- query$organism
             }
-            
+
             if ("geneDE_key" %in% names(query)) {
                 geneDE_key <- gsub("[^a-z0-9]", "", query$geneDE_key)
                 loginfo("found key: %s", geneDE_key)
@@ -85,11 +85,11 @@ app_server <- function(config_file) {
                 queryValues$geneDE_key <- geneDE_key
             }
         })
-        
+
         loadExample <- reactive({
             input$loadExampleGeneDE || input$loadExampleMetDE
         })
-        
+
         getNetwork <- reactive({
             if (input$loadExampleLipidDE) {
                 res <- lazyReadRDS(networks[["lipidomic"]],
@@ -114,8 +114,8 @@ app_server <- function(config_file) {
             }
             res
         })
-        
-        
+
+
 
         geneDEInputRaw <- reactive({
             if (loadExample()) {
@@ -126,19 +126,19 @@ app_server <- function(config_file) {
                 }
                 return(NULL)
             }
-            
+
             if (!is.null(input$geneDE) && !is(input$geneDE, "data.frame")) {
                 # Value was reset
                 return(NULL)
             }
-            
+
 
             if (!is.null(input$geneDE)) {
                 loginfo("GeneDE file:")
                 loginfo(capture.output(str(input$geneDE)))
                 loginfo("reading gene.de: %s", input$geneDE$name)
                 loginfo("      from file: %s", input$geneDE$datapath)
-                
+
                 path <- input$geneDE$datapath
                 deName <- input$geneDE$name
             } else if (!is.null(queryValues$geneDE_key)) {
@@ -153,7 +153,7 @@ app_server <- function(config_file) {
                 # User has not uploaded a file yet and we don't have a key
                 return(NULL)
             }
-            
+
             if (grepl("xlsx?$", input$geneDE$name)){
                 res <- read.xlsx(path)
             } else {
@@ -165,6 +165,18 @@ app_server <- function(config_file) {
         })
 
 
+        geneDEMeta <- reactive({
+            gene.de.raw <- geneDEInputRaw()
+
+            if (is.null(gene.de.raw)) {
+                return(NULL)
+            }
+
+            org.gatom.anno <- getAnnotation()
+            gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
+            gene.de.meta
+        })
+
         geneDEInput <- reactive({
             gene.de.raw <- geneDEInputRaw()
 
@@ -174,7 +186,8 @@ app_server <- function(config_file) {
 
             org.gatom.anno <- getAnnotation()
             gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
-            
+            loginfo(capture.output(str(gene.de.meta)))
+
             res <- prepareDE(gene.de.raw, gene.de.meta)
             # res[, signalRank := NULL] # todo
 
@@ -192,29 +205,29 @@ app_server <- function(config_file) {
 
 
         geneIdsType <- reactive({
-            data <- geneDEInput()
-            if (is.null(data)) {
+            gene.de.meta <- geneDEMeta()
+
+            if (is.null(gene.de.meta)) {
                 return(NULL)
             }
-            
-            org.gatom.anno <- getAnnotation()
 
-            res <- getGeneDEMeta(data, org.gatom.anno)$idType
-            
+            res <- gene.de.meta$idType
+
+
             if (length(res) != 1) {
                 stop("Can't determine type of IDs for genes")
             }
             res
         })
-        
-        
+
+
         output$geneDESummary <- renderUI({
             gene.de <- geneDEInput()
             ids.type <- geneIdsType()
             if (is.null(gene.de)) {
                 return("There is no genomic data")
             }
-            
+
             div(
                 HTML(
                     vector2html(c(
@@ -224,14 +237,14 @@ app_server <- function(config_file) {
                     ))),
                 p("Top DE genes:"))
         })
-        
+
 
         output$geneDETable <- renderTable({
             data <- geneDEInput()
             if (is.null(data)) {
                 return(NULL)
             }
-            
+
             if ("signalRank" %in% colnames(data)){
                 data[ , signalRank := NULL]
             }
@@ -246,9 +259,9 @@ app_server <- function(config_file) {
             if (is.null(geneIT)) {
                 return(NULL)
             }
-            
-            gene.de.meta <- getGeneDEMeta(gene.de, org.gatom.anno)
-            data <- prepareDE(gene.de, gene.de.meta)
+
+            gene.de.meta <- geneDEMeta()
+            data <- gene.de
             data$initialID <- data$ID
 
             split <- " */// *"
@@ -281,7 +294,7 @@ app_server <- function(config_file) {
 
             notMapped
         })
-        
+
         output$geneDENotMapped <- renderUI({
             data <- geneDEInput()
             if (is.null(data)) {
@@ -289,7 +302,7 @@ app_server <- function(config_file) {
             }
             notMapped <- notMappedGenes()
             org.gatom.anno <- getAnnotation()
-            
+
             div(
                 p(sprintf("Not mapped to %s: %s",
                           org.gatom.anno$baseId,
@@ -309,7 +322,7 @@ app_server <- function(config_file) {
                     )
                 } else NULL)
         })
-        
+
 
         output$geneDENotMappedTable <- renderTable({
             data <- geneDEInput()
@@ -320,7 +333,7 @@ app_server <- function(config_file) {
             if (length(notMapped) == 0) {
                 return(NULL)
             }
-            
+
             data <- data[order(pval)]
             not.mapped.data <- data[ID %in% notMapped]
             format(as.data.frame(head(not.mapped.data, n=20)), digits=3)
@@ -337,7 +350,7 @@ app_server <- function(config_file) {
                 }
                 return(NULL)
             }
-            
+
             if (input$loadExampleLipidDE){
                 example.lip.de <- force(fread(conf$example.lip.de.path, colClasses="character"))
                 attr(example.lip.de, "name") <- basename(conf$example.lip.de.path)
@@ -352,12 +365,12 @@ app_server <- function(config_file) {
                 # Value was reset
                 return(NULL)
             }
-            
+
             loginfo("MetDE file:")
             loginfo(capture.output(str(input$metDE)))
             loginfo("reading met.de: %s", input$metDE$name)
             loginfo("     from file: %s", input$metDE$datapath)
-            
+
             if (grepl("xlsx?$", input$metDE$name)){
                 res <- read.xlsx(input$metDE$datapath)
             } else {
@@ -367,13 +380,13 @@ app_server <- function(config_file) {
 
             res
         })
-        
+
         metDEInput <- reactive({
             met.de.raw <- metDEInputRaw()
             if (is.null(met.de.raw)) {
                 return(NULL)
             }
-            
+
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                             path = conf$path.to.met.lipid.db)
@@ -387,11 +400,11 @@ app_server <- function(config_file) {
                                            path = conf$path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-            
+
             met.de.meta <- getMetDEMeta(met.de.raw, met.db)
 
             res <- prepareDE(met.de.raw, met.de.meta)
-            
+
             logdebug(capture.output(str(res)))
             if (!all(necessary.met.de.fields %in% names(res))) {
                 loginfo("not all fields in DE file: %s", input$metDE$datapath)
@@ -403,14 +416,14 @@ app_server <- function(config_file) {
             res
 
         })
-        
-        
+
+
         metIdsType <- reactive({
             data <- metDEInput()
             if (is.null(data)) {
                 return(NULL)
             }
-            
+
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                             path = conf$path.to.met.lipid.db)
@@ -440,7 +453,7 @@ app_server <- function(config_file) {
             if (is.null(met.de)) {
                 return("There is no metabolic data")
             }
-            
+
             div(
                 HTML(
                     vector2html(c(
@@ -450,20 +463,20 @@ app_server <- function(config_file) {
                     ))),
                 p("Top DE metabolites:"))
         })
-        
+
 
         output$metDETable <- renderTable({
             data <- metDEInput()
             if (is.null(data)) {
                 return(NULL)
             }
-            
+
             if ("signalRank" %in% colnames(data)){
                 data[ , signalRank := NULL]
             }
             format(as.data.frame(head(data[order(pval)])), digits=3)
         })
-        
+
 
         notMappedMets <- reactive({
             met.de <- metDEInput()
@@ -481,13 +494,13 @@ app_server <- function(config_file) {
                                            path = conf$path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-            
+
             metIT <- metIdsType()
-            
+
             if (is.null(metIT)) {
                 return(NULL)
             }
-            
+
             meta.met.de <- getMetDEMeta(met.de, met.db=met.db)
             data <- gatom:::prepareDE(met.de, meta.met.de)
             data$initialID <- data$ID
@@ -512,7 +525,7 @@ app_server <- function(config_file) {
 
             data.new <- data[!(data$ID %in% notMappedIDs)]
             data.new <- data.new[ , -"ID"]
-            
+
             data.new <- data.new[!duplicated(data.new), ]
 
             data <- data[ , -"ID"]
@@ -521,7 +534,7 @@ app_server <- function(config_file) {
 
             notMapped
         })
-        
+
 
         output$metDENotMapped <- renderUI({
             data <- metDEInput()
@@ -529,7 +542,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             notMapped <- notMappedMets()
-            
+
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                             path = conf$path.to.met.lipid.db)
@@ -543,7 +556,7 @@ app_server <- function(config_file) {
                                            path = conf$path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-            
+
             div(
                 p(sprintf("Not mapped to %s: %s", met.db$baseId, length(notMapped))),
                 if (length(notMapped) > 0) {
@@ -561,7 +574,7 @@ app_server <- function(config_file) {
                     )
                 } else NULL)
         })
-        
+
 
         output$metDENotMappedTable <- renderTable({
             data <- metDEInput()
@@ -572,7 +585,7 @@ app_server <- function(config_file) {
             if (length(notMapped) == 0) {
                 return(NULL)
             }
-            
+
             data <- data[order(pval)]
             data <- data[ID %in% notMapped]
             format(as.data.frame(head(data, n=20)), digits=3)
@@ -588,45 +601,45 @@ app_server <- function(config_file) {
             tag <- gsub("\\.([ct]sv|txt)$", "", tag)
             tag
         })
-        
-        
+
+
         gInput <- reactive({
             input$preprocess
             loginfo("Preprocessing")
-            
+
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
-            
+
             if (is.null(gene.de) && is.null(met.de)) {
                 return(NULL)
             }
-            
+
             network <- isolate(getNetwork())
             gene.ids <- isolate(geneIdsType())
             met.ids <- isolate(metIdsType())
             tag <- isolate(experimentTag())
-            
-            
+
+
             longProcessStart()
-            
+
             tryCatch({
-                
+
                 topology <- isolate(input$nodesAs)
                 org.gatom.anno <- isolate(getAnnotation())
                 keepReactionsWithoutEnzymes <- FALSE
                 gene2reaction.extra <- NULL
-                
+
                 if ((isolate(input$network) == "lipidomic") || isolate(input$loadExampleLipidDE)) {
                     met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                                 path = conf$path.to.met.lipid.db)
                     met.db <- met.lipid.db
-                    
+
                     if (isolate(input$loadExampleLipidDE)) {
                         gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]], colClasses="character"))[gene != "-"]
                     } else {
                         gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]], colClasses="character"))[gene != "-"]
                     }
-                    
+
                     topology <- "metabolites"
                     keepReactionsWithoutEnzymes <- TRUE
                 } else if (isolate(input$network) == "kegg"){
@@ -638,7 +651,7 @@ app_server <- function(config_file) {
                                                path = conf$path.to.met.rhea.db)
                     met.db <- met.rhea.db
                 }
-                
+
                 g <- makeMetabolicGraph(network=network,
                                         topology=topology,
                                         org.gatom.anno=org.gatom.anno,
@@ -649,27 +662,27 @@ app_server <- function(config_file) {
                                                                         package="gatom"))$ID,
                                         keepReactionsWithoutEnzymes = keepReactionsWithoutEnzymes,
                                         gene2reaction.extra = gene2reaction.extra)
-                
+
                 attr(g, "tag") <- tag
                 g$organism <- isolate(input$organism)
                 g
             }, finally=longProcessStop())
         })
-        
-        
+
+
         output$networkSummary <- reactive({
             g <- gInput()
             if (is.null(g)) {
                 return("There is no built network")
             }
-            
+
             vector2html(c(
                 "number of nodes" = length(V(g)),
                 "number of edges" = length(E(g))
             ))
         })
-        
-        
+
+
         kGene <- reactive({
             input$preprocess
             gene.de <- isolate(geneDEInput())
@@ -711,7 +724,7 @@ app_server <- function(config_file) {
         kMet <- reactive({
             input$preprocess
             met.de <- isolate(metDEInput())
-            
+
             if (is.null(met.de)) {
                 return(NULL)
             } else if (input$nullkmet) {
@@ -719,11 +732,11 @@ app_server <- function(config_file) {
             }
             input$kmet
         })
-        
+
         thresholdMet <- reactive({
             input$preprocess
             met.de <- isolate(metDEInput())
-            
+
             if (is.null(met.de)) {
                 return(NULL)
             } else if (input$nullkmet) {
@@ -749,12 +762,12 @@ app_server <- function(config_file) {
             if (is.null(g)) {
                 return(NULL)
             }
-            
+
             gene.de <- isolate(geneDEInput())
             if (is.null(gene.de)) {
                 return(NULL)
             }
-            
+
             if (is.null(input$kgene) & is.null(input$thresholdgene) & is.null(input$fdrgene)) {
                 return(NULL)
             }
@@ -764,14 +777,14 @@ app_server <- function(config_file) {
             res <- fitToBUM(table=edge.table)
             res
         })
-        
-        
+
+
         metBUM <- reactive({
             g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
-            
+
             met.de <- isolate(metDEInput())
             if (is.null(met.de)) {
                 return(NULL)
@@ -786,8 +799,8 @@ app_server <- function(config_file) {
             res <- fitToBUM(table=vertex.table)
             res
         })
-        
-        
+
+
         genesScoring <- reactive({
             g <- gInput()
             if (is.null(g)) {
@@ -844,7 +857,7 @@ app_server <- function(config_file) {
                 p(sprintf("Amount of gene signals: %s", length(pvalsToFit)))
             )
         })
-        
+
         output$genesBUMPlot <- renderPlot({
 
             g <- gInput()
@@ -857,7 +870,7 @@ app_server <- function(config_file) {
             if (is.null(gen.bum)) {
                 return(NULL)
             }
-            
+
             hist(gen.bum)
         })
 
@@ -928,7 +941,7 @@ app_server <- function(config_file) {
 
             return(scores)
         })
-        
+
         output$metsBUMSummary <- renderUI({
             g <- gInput()
             if (is.null(g)) {
@@ -942,7 +955,7 @@ app_server <- function(config_file) {
             }
 
             pvalsToFit <- vertex.table[!is.na(pval)][!duplicated(signal), setNames(pval, signal)]
-            
+
             div(
                 p(sprintf("Metabolite BU alpha: %.3g", met.bum$a)),
                 p(sprintf("Amount of metabolite signals: %s", length(pvalsToFit)))
@@ -977,7 +990,7 @@ app_server <- function(config_file) {
             if (is.null(met.bum)) {
                 return(NULL)
             }
-            
+
             scores <- metsScoring()
             if (is.null(scores)) {
                 return(NULL)
@@ -995,34 +1008,34 @@ app_server <- function(config_file) {
                 )
             }
         })
-        
-        
-        
+
+
+
         observeEvent(input$preprocess, {
-            
+
             output$networkParameters <- reactive({
                 g <- NULL
                 tryCatch({
                     g <- isolate(gInput())
                 }, error=function(e) {})
-                
+
                 if (is.null(g)) {
                     return("")
                 }
-                
+
                 gene.de <- isolate(geneDEInput())
                 met.de <- isolate(metDEInput())
-                
+
                 has.genes <- FALSE
                 has.mets <- FALSE
-                
+
                 if (!is.null(gene.de)) {
                     has.genes <- TRUE
                 }
                 if (!is.null(met.de)) {
                     has.mets <- TRUE
                 }
-                
+
                 res <- paste0(
                     makeJsAssignments(
                         network.available = TRUE,
@@ -1030,18 +1043,18 @@ app_server <- function(config_file) {
                         network.hasMets = has.mets
                     )
                 )
-                
-                
+
+
                 if (isolate(input$autoFindModule)) {
                     res <- paste0(res, '$("#find").trigger("click");')
                 }
-                
+
                 res <- paste0(res, '$("#find").removeAttr("disabled").addClass("btn-default");')
                 res
             })
         })
-        
-        
+
+
         output$enableMakeNetwork <- renderJs({
             res <- ""
             canRun <- FALSE
@@ -1050,12 +1063,12 @@ app_server <- function(config_file) {
                 gIT <- geneIdsType()
                 metDE <- metDEInput()
                 mIT <- metIdsType()
-                
+
                 canRun <- !is.null(geneDE) || !is.null(metDE)
             }, error=function(e) {
                 # if anything happened, not running
             })
-            
+
             if (canRun) {
                 res <- paste0(res, '$("#runStep1").removeAttr("disabled").addClass("btn-default");')
                 res <- paste0(res, '$("#runAll").removeAttr("disabled").addClass("btn-default");')
@@ -1065,33 +1078,33 @@ app_server <- function(config_file) {
             }
             res
         })
-        
+
         output$showScoringPanel <- renderJs({
             if (!is.null(gInput())) { return("$('#scoring-panel')[0].scrollIntoView()")
             }
             return("")
         })
-        
+
         output$showModulePanel <- renderJs({
             if (!is.null(moduleInput())) { return("$('#module-panel')[0].scrollIntoView()")
             }
             return("")
         })
-        
-        
+
+
         getSolver <- reactive({
             g <- gInput()
             if (is.null(g)) {
                 return(NULL)
             }
-            
+
             if (input$solveToOptimality) {
                 v.solver
             } else {
                 v2.solver
             }
         })
-        
+
         output$solverString <- reactive({
             g <- gInput()
             solver <- getSolver()
@@ -1101,106 +1114,106 @@ app_server <- function(config_file) {
                 ""
             }
         })
-        
+
         gScoredInput <- reactive({
             input$find
             g <- isolate(gInput())
-            
+
             if (is.null(g)) {
                 return(NULL)
             }
-            
+
             longProcessStart()
             loginfo(paste0(attr(g, "tag"),".mp"
             ))
-            
-            
+
+
             gene.de <- isolate(geneDEInput())
             met.de <- isolate(metDEInput())
-            
+
             gene.bum <- genBUM()
             metabolite.bum <- metBUM()
-            
+
             gen.scores <- genesScoring()
             met.scores <- metsScoring()
-            
+
             res <- scoreGraphShiny(g=g, k.gene=gen.scores$k, k.met=met.scores$k,
                                    metabolite.bum=metabolite.bum, gene.bum=gene.bum,
                                    vertex.threshold=met.scores$threshold,
                                    edge.threshold=gen.scores$threshold
             )
-            
-            
+
+
             res$description.string <- paste0(attr(g, "tag")
             )
             res
         })
-        
+
         rawModuleInput <- reactive({
             input$find
-            
+
             gScored <- isolate(gScoredInput())
-            
+
             if (is.null(gScored)) {
                 return(NULL)
             }
-            
+
             longProcessStart()
             tryCatch({
                 solver <- isolate(getSolver())
-                
+
                 inst <- gScored
-                
+
                 res <- solve_mwcsp(solver, inst)
                 res <- res$graph
-                
+
                 if (is.null(res) || length(V(res)) == 0) {
                     stop("No module found")
                 }
                 res$description.string <- gScored$description.string
                 res
-                
+
             }, finally=longProcessStop())
         })
-        
+
         moduleInput <- reactive({
             module <- rawModuleInput()
             if (is.null(module)) {
                 return(NULL)
             }
-            
+
             # for consistency
             module <- remove.vertex.attribute(module, "score")
             module <- remove.edge.attribute(module, "score")
-            
+
             g <- isolate(gInput())
-            
+
             if (input$addHighlyExpressedEdges) {
                 module <- addHighlyExpressedEdges(module, g)
             }
-            
+
             if (input$metaboliteActions == "connectAtomsInsideMetabolite") {
                 module <- connectAtomsInsideMetabolite(module)
             } else if (input$metaboliteActions == "collapseAtomsIntoMetabolites") {
                 module <- collapseAtomsIntoMetabolites(module)
             }
-            
+
             module$description.string <- rawModuleInput()$description.string
             module
         })
-        
+
         output$moduleSummary <- reactive({
             module <- moduleInput()
             if (is.null(module)) {
                 return("There is no module yet")
             }
-            
+
             vector2html(c(
                 "number of nodes" = length(V(module)),
                 "number of edges" = length(E(module))
             ))
         })
-        
+
         output$moduleParameters <- reactive({
             m <- NULL
             tryCatch({
@@ -1210,7 +1223,7 @@ app_server <- function(config_file) {
                 module.available = !is.null(m)
             )
         })
-        
+
         output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput()))
 
         output$downloadNetwork <- downloadHandler(
@@ -1218,13 +1231,13 @@ app_server <- function(config_file) {
             content = function(file) {
                 saveModuleToXgmml(gInput(), file=file, name=tolower(gInput()$organism))
             })
-        
+
         output$downloadModule <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".xgmml") }),
             content = function(file) {
                 saveModuleToXgmml(moduleInput(), file=file, moduleInput()$description.string)
             })
-        
+
         dotFile <- reactive({
             m <- moduleInput()
             if (is.null(m)) {
@@ -1236,7 +1249,7 @@ app_server <- function(config_file) {
             longProcessStop()
             res
         })
-        
+
         svgFile <- reactive({
             df <- dotFile()
             if (is.null(df)) {
@@ -1248,7 +1261,7 @@ app_server <- function(config_file) {
                                df), stderr=NULL)
             res
         })
-        
+
         pdfFile <- reactive({
             df <- dotFile()
             if (is.null(df)) {
@@ -1260,7 +1273,7 @@ app_server <- function(config_file) {
                                df), stderr=NULL)
             res
         })
-        
+
         output$downloadXlsx <- downloadHandler(
             filename = reactive({ paste0(moduleInput()$description.string, ".xlsx") }),
             content = function(file) {
@@ -1273,10 +1286,10 @@ app_server <- function(config_file) {
 
                 metTable <- data.table(as_data_frame(module, what="vertices"))
                 rxnTable <- data.table(as_data_frame(module, what="edges"))
-                
+
                 addWorksheet(wb, "metabolites")
                 writeData(wb, "metabolites", metTable, row.names=F)
-                
+
                 addWorksheet(wb, "reactions")
                 writeData(wb, "reactions", rxnTable, row.names=F)
 
@@ -1291,14 +1304,14 @@ app_server <- function(config_file) {
             content = function(file) {
                 file.copy(pdfFile(), file)
             })
-        
+
         output$downloadDot <- downloadHandler(
-            
+
             filename = reactive({ paste0(moduleInput()$description.string, ".dot") }),
             content = function(file) {
                 file.copy(dotFile(), file)
             })
-        
+
         output$downloadVizMap <- downloadHandler(
             filename = "GAM_VizMap.xml",
             content = function(file) {
@@ -1311,14 +1324,14 @@ app_server <- function(config_file) {
                         to=file)
                 }
             })
-        
+
         output$GatomVersion <- renderUI({
             p(paste("gatom version:", packageVersion("gatom")))
         })
-        
-        
+
+
         observeEvent(input$findPathways, {
-            
+
             output$pathwaysParameters <- reactive({
                     makeJsAssignments(
                         pathways.show = TRUE
@@ -1332,8 +1345,8 @@ app_server <- function(config_file) {
             }
             return("")
         })
-        
-        
+
+
         pathwaysInput <- reactive({
             m <- moduleInput()
             if (is.null(m)) {
@@ -1352,17 +1365,17 @@ app_server <- function(config_file) {
                                    universe=unique(E(g)$gene),
                                    minSize=5)
             res <- foraRes[padj < 0.05]
-# 
+#
 #             if (input$collapsePathways) {
 #                 mainPathways <- fgsea::collapsePathwaysORA(
 #                     res,
 #                     pathways=org.gatom.anno$pathways,
 #                     genes=E(m)$gene,
 #                     universe=unique(E(g)$gene))
-# 
+#
 #                 res <- foraRes[pathway %in% mainPathways$mainPathways]
 #             }
-            
+
             res
         })
 
@@ -1384,11 +1397,11 @@ app_server <- function(config_file) {
 
         observe({
             pathways <- pathwaysInput()
-            
+
             pathwayChoices <- c("None", pathways$pathway)
             pathwayChoices <- as.character(pathwayChoices)
             names(pathwayChoices) <- pathwayChoices
-            
+
             updateSelectInput(session, "selectPathway",
                               choices = pathwayChoices,
                               selected = "None")
@@ -1430,20 +1443,20 @@ app_server <- function(config_file) {
                 js$UnSelectPathway()
             }
         })
-        
+
         output$GAMVersion <- renderUI({
             p(paste("GAM version:", sessionInfo()$otherPkgs$GAM$Revision))
         })
-        
+
         output$geneDEExample <- renderUI({
             a("here", href=config::get("example.gene.de.path", config="default", file=config_file, use_parent = FALSE), target="_blank")
         })
-        
+
         output$metDEExample <- renderUI({
             a("here", href=config::get("example.met.de.path", config="default", file=config_file, use_parent = FALSE), target="_blank")
         })
-        
-        
+
+
         output$downloadVizMapInHelp <- downloadHandler(
             filename = "GAM_VizMap.xml",
             content = function(file) {
