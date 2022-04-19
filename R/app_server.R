@@ -590,6 +590,47 @@ app_server <- function(config_file) {
         })
         
         
+        typeIsSpecies <- reactive({
+            met.de <- metDEInput()
+            if (is.null(met.de)) {
+                return(FALSE)
+            }
+            
+            metIT <- isolate(metIdsType())
+            loginfo(metIT)
+            
+            if (metIT == "Species") {
+                flag <- TRUE
+            } else {
+                flag <- FALSE
+            }
+            return(flag)
+        })
+        
+        originalNamesFlag <- reactive({
+            met.de <- metDEInput()
+            if (is.null(met.de)) {
+                return(FALSE)
+            }
+            speciesFlag <- typeIsSpecies()
+            loginfo(speciesFlag)
+            if (speciesFlag) {
+                if (input$useOriginalLipidNames) {
+                    return(TRUE)
+                }
+            }
+            
+            return(FALSE)
+        })
+        
+        output$lipidSpeciesParameters <- reactive({
+            flag <- typeIsSpecies()
+            
+            makeJsAssignments(
+                mapping.fromSpecies = flag
+            )
+        })
+        
         gInput <- reactive({
             input$preprocess
             loginfo("Preprocessing")
@@ -625,6 +666,10 @@ app_server <- function(config_file) {
                         gene2reaction.extra <- (fread(annotationRheaPaths[["mmu"]], colClasses="character"))[gene != "-"]
                     } else {
                         gene2reaction.extra <- (fread(annotationRheaPaths[[input$organism]], colClasses="character"))[gene != "-"]
+                    }
+                    
+                    if (met.ids == "Species") {
+                        met.de$SpecialSpeciesLabelColumn <- met.de$ID
                     }
                     
                     topology <- "metabolites"
@@ -1211,7 +1256,8 @@ app_server <- function(config_file) {
             )
         })
         
-        output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput()))
+        output$module <- renderShinyCyJS(prepareForShinyCyJS(moduleInput(), 
+                                                             orig_names=originalNamesFlag()))
 
         output$downloadNetwork <- downloadHandler(
             filename = reactive({ paste0("network.", tolower(gInput()$organism), ".xgmml")}),

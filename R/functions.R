@@ -18,7 +18,7 @@ getJsNodeStyleAttributes <- function(attrs) {
         label=if (!is.null(attrs$label)) label else "",
         id=attrs$name,
         shape=if (!is.null(attrs$nodeType)) nodeShapeMap[nodeType] else "ellipse",
-        fontSize=sapply(logPval, gatom:::getDotSize) * 25,
+        fontSize= getFontSizeJs(logPval), # fontSize=sapply(logPval, gatom:::getDotSize) * 40,
         bgColor=if (!is.null(attrs$log2FC)) sapply(log2FC, gatom:::getDotColor) else "#7777ff",
         borderWidth=4,
         borderColor="#eee",
@@ -27,6 +27,11 @@ getJsNodeStyleAttributes <- function(attrs) {
     ))
 }
 
+getFontSizeJs <- function(val) {
+    val <- sapply(val, gatom:::getDotSize) * 40
+    val <- replace(val, val < 15, 15)
+    val
+}
 
 getJsEdgeStyleAttributes <- function(attrs) {
     logPval <- if (!is.null(attrs$logPval)) attrs$logPval else 1
@@ -35,7 +40,7 @@ getJsEdgeStyleAttributes <- function(attrs) {
         target=attrs$to,
         label=if (!is.null(attrs$label)) label else if (!is.null(attrs$gene)) gene else "",
         lineStyle="solid",
-        fontSize=sapply(logPval, gatom:::getDotSize) * 25,
+        fontSize= getFontSizeJs(logPval), # sapply(logPval, gatom:::getDotSize) * 40,
         lineColor=if (!is.null(attrs$log2FC)) sapply(as.numeric(log2FC), gatom:::getDotColor) else "grey",
         tooltip=getJsTooltip(attrs)
     ))
@@ -439,7 +444,8 @@ scoreGraphShiny <- function(g, k.gene, k.met,
 
 ############################################### NEW FUNCTIONS
 
-prepareForShinyCyJS <- function(module, layout=list(name = "cose", animate = FALSE)){
+
+prepareForShinyCyJS <- function(module, layout=list(name="cose", animate=FALSE), orig_names){
     if (is.null(module)) {
         return(NULL)
         # nodes <- data.frame()
@@ -448,7 +454,20 @@ prepareForShinyCyJS <- function(module, layout=list(name = "cose", animate = FAL
 
         vertex.table <- as_data_frame(module, what="vertices")
         edge.table <- as_data_frame(module, what="edges")
-
+        
+        if (orig_names) {
+            vertex.table$tmp <- vertex.table$label
+            vertex.table$label <- vertex.table$SpecialSpeciesLabelColumn
+            vertex.table$SpecialSpeciesLabelColumn <- vertex.table$tmp
+            vertex.table$tmp <- NULL
+            
+            vertex.table$label[is.na(vertex.table$label)] <- vertex.table$Abbreviation_LipidMaps[is.na(vertex.table$label)]
+            vertex.table$label[is.na(vertex.table$label)] <- vertex.table$Abbreviation_SwissLipids[is.na(vertex.table$label)]
+            vertex.table$label[vertex.table$label == "-"] <- vertex.table$Abbreviation_SwissLipids[vertex.table$label == "-"]
+            vertex.table$label[is.na(vertex.table$label)] <- vertex.table$SpecialSpeciesLabelColumn[is.na(vertex.table$label)]
+            vertex.table$label[vertex.table$label == "-"] <- vertex.table$SpecialSpeciesLabelColumn[vertex.table$label == "-"]
+        }
+        
         nodes <- getJsNodeStyleAttributes(vertex.table)
         edges <- getJsEdgeStyleAttributes(edge.table)
 
