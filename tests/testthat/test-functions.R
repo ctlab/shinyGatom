@@ -38,7 +38,7 @@ test_that("Edge attributes are created", {
 
 test_that("ShinyCyJs data is created", {
     load(system.file('testdata/moduleEx.Rda', package = 'shinyGatom'))
-    res <- prepareForShinyCyJS(module)
+    res <- prepareForShinyCyJS(module, orig_names=TRUE)
     expect_true(!is.null(res))
 })
 
@@ -58,7 +58,7 @@ test_that("KEGG network is created with nodes as atoms", {
                              met.de=example.met.de,
                              met.to.filter=fread(system.file("mets2mask.lst",
                                                              package="gatom"))$ID)
-
+    
     expect_true(!is.null(es))
 })
 
@@ -79,7 +79,7 @@ test_that("Rhea metwork is created with nodes as metabolites", {
                              met.de=example.met.de,
                              met.to.filter=fread(system.file("mets2mask.lst",
                                                              package="gatom"))$ID)
-
+    
     expect_true(!is.null(es))
 })
 
@@ -136,7 +136,7 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-
+    
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
                             org.gatom.anno=org.Mm.eg.gatom.anno,
@@ -145,8 +145,8 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-
+    
+    
     k.met <- 25
     k.gene <- 50
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
@@ -162,7 +162,7 @@ test_that("Graph is scored when k.gene and k.met are not NULL", {
                           metabolite.bum=met.bum, gene.bum=gene.bum,
                           vertex.threshold=met.scores$threshold, 
                           edge.threshold=gene.scores$threshold)
-
+    
     expect_true(!is.null(V(sg)$score))
 })
 
@@ -175,7 +175,7 @@ test_that("Graph is scored when k.gene is NULL", {
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-
+    
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
                             org.gatom.anno=org.Mm.eg.gatom.anno,
@@ -184,8 +184,8 @@ test_that("Graph is scored when k.gene is NULL", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-
+    
+    
     k.met <- 25
     k.gene <- NULL
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
@@ -201,7 +201,7 @@ test_that("Graph is scored when k.gene is NULL", {
                           metabolite.bum=met.bum, gene.bum=gene.bum,
                           vertex.threshold=met.scores$threshold, 
                           edge.threshold=gene.scores$threshold)
-
+    
     expect_true(!is.null(V(sg)$score))
 })
 
@@ -213,7 +213,7 @@ test_that("Graph is scored when k.met is NULL", {
     example.met.de <- force(fread(conf$example.met.de.path))
     attr(example.met.de, "name") <- basename(conf$example.met.de.path)
     met.db <- met.kegg.db
-
+    
     g <- makeMetabolicGraph(network=network,
                             topology=topology,
                             org.gatom.anno=org.Mm.eg.gatom.anno,
@@ -222,8 +222,8 @@ test_that("Graph is scored when k.met is NULL", {
                             met.de=example.met.de,
                             met.to.filter=fread(system.file("mets2mask.lst",
                                                             package="gatom"))$ID)
-
-
+    
+    
     k.met <- NULL
     k.gene <- 25
     vertex.table <- data.table(as_data_frame(g, what="vertices"))
@@ -239,6 +239,6 @@ test_that("Graph is scored when k.met is NULL", {
                           metabolite.bum=met.bum, gene.bum=gene.bum,
                           vertex.threshold=met.scores$threshold, 
                           edge.threshold=gene.scores$threshold)
-
+    
     expect_true(!is.null(V(sg)$score))
 })

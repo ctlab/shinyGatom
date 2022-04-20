@@ -20,7 +20,7 @@ testServer(shinyGatom(), {
     session$setInputs(loadExampleMetDE = TRUE)
     session$setInputs(loadExampleLipidDE = FALSE)
     session$setInputs(network = "kegg")
-
+    
     expect_true(metIdsType() == "HMDB")
 })
 
@@ -31,16 +31,16 @@ testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = FALSE)
     session$setInputs(loadExampleMetDE = FALSE)
     session$setInputs(loadExampleLipidDE = FALSE)
-
+    
     session$setInputs(network = "kegg")
     session$setInputs(organism = "mmu")
     session$setInputs(nodesAs = "atoms")
-
+    
     session$setInputs(geneDE=data.frame(datapath=conf$example.gene.de.path,
                                         name="Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
     session$setInputs(metDE=data.frame(datapath=conf$example.met.de.path,
                                        name="Ctrl.vs.MandLPSandIFNg.met.de.tsv"))
-
+    
     expect_equal(metIdsType(), "HMDB")
 })
 
@@ -52,7 +52,7 @@ testServer(shinyGatom(), {
     session$setInputs(loadExampleMetDE = TRUE)
     session$setInputs(loadExampleLipidDE = FALSE)
     session$setInputs(network = "rhea")
-
+    
     expect_true(metIdsType() == "HMDB")
 })
 
@@ -90,21 +90,23 @@ testServer(shinyGatom(), {
     expect_true(!is.null(V(g)))
 })
 
+
+context("Network is created with KEGG network and nodes as metabolites")
 testServer(shinyGatom(), {
     session$setInputs(loadExampleGeneDE = FALSE)
     session$setInputs(loadExampleMetDE = FALSE)
     session$setInputs(loadExampleLipidDE = FALSE)
-
+    
     session$setInputs(network = "kegg")
     session$setInputs(organism = "hsa")
     session$setInputs(nodesAs = "metabolites")
-
+    
     session$setInputs(geneDE=data.frame(datapath="https://artyomovlab.wustl.edu/publications/supp_materials/GAM/MCF10A.Ctrl.vs.2DG.gene.de.tsv",
                                         name="MCF10A.Ctrl.vs.2DG.gene.de.tsv"))
-
+    
     session$setInputs(preprocess = TRUE)
     session$setInputs(runStep1 = "click")
-
+    
     g <- gInput()
     expect_true(!is.null(V(g)))
 })
