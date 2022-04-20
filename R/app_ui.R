@@ -234,6 +234,11 @@ app_ui <- function(config_file) {
                                                      selected="NoAction")
 
                         ),
+                        conditionalPanel("mapping.fromSpecies",
+                                         checkboxInput("useOriginalLipidNames",
+                                                       label="Use original lipid names",
+                                                       value=TRUE)
+                        ),
                         selectInput("selectPathway",
                                     label="Select a pathway to highlight",
                                     choices = c("None" = "None"),
