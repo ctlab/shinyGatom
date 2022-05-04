@@ -106,14 +106,20 @@ app_ui <- function(config_file) {
                         uiOutput("geneDESummary"),
                         uiOutput("geneDETable"),
                         uiOutput("geneDENotMapped"),
-                        uiOutput("geneDENotMappedTable")
+                        uiOutput("geneDENotMappedTable"),
+                        conditionalPanel("inputdata.hasGenes",
+                                         downloadButton("downloadGeneDENotMappedTable", "Download unmapped genes CSV")
+                        )
                     ),
                     div(class="DEBlock",
                         h3("Differential expression for metabolites"),
                         uiOutput("metDESummary"),
                         uiOutput("metDETable"),
                         uiOutput("metDENotMapped"),
-                        uiOutput("metDENotMappedTable")
+                        uiOutput("metDENotMappedTable"),
+                        conditionalPanel("inputdata.hasMets",
+                                         downloadButton("downloadMetDENotMappedTable", "Download unmapped metabolites CSV")
+                        )
                     )
                 )
             ),

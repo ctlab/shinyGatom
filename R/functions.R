@@ -431,6 +431,8 @@ scoreGraphShiny <- function(g, k.gene, k.met,
     if (raw) {
         return(g)
     }
+    # delete
+    # save(g, file="../error_in_normalizing.rda")
 
     res <- normalize_sgmwcs_instance(g,
                                      nodes.weight.column = "score",
@@ -448,8 +450,6 @@ scoreGraphShiny <- function(g, k.gene, k.met,
 prepareForShinyCyJS <- function(module, layout=list(name="cose", animate=FALSE), orig_names){
     if (is.null(module)) {
         return(NULL)
-        # nodes <- data.frame()
-        # edges <- data.frame()
     } else {
 
         vertex.table <- as_data_frame(module, what="vertices")

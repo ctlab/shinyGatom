@@ -185,7 +185,7 @@ app_server <- function(config_file) {
             }
 
             org.gatom.anno <- getAnnotation()
-            gene.de.meta <- getGeneDEMeta(gene.de.raw, org.gatom.anno)
+            gene.de.meta <- geneDEMeta()
             loginfo(capture.output(str(gene.de.meta)))
 
             res <- prepareDE(gene.de.raw, gene.de.meta)
@@ -339,7 +339,62 @@ app_server <- function(config_file) {
             format(as.data.frame(head(not.mapped.data, n=20)), digits=3)
         })
         outputOptions(output, "geneDENotMappedTable", suspendWhenHidden = FALSE)
-
+        
+        
+        geneDENotMappedTableToDownload <- reactive({
+            data <- geneDEInput()
+            if (is.null(data)) {
+                return(NULL)
+            }
+            notMapped <- notMappedGenes()
+            if (length(notMapped) == 0) {
+                return(NULL)
+            }
+            
+            data <- data[order(pval)]
+            not.mapped.data <- data[ID %in% notMapped]
+            not.mapped.data
+        })
+        
+        geneDETag <- reactive({
+            geneData <- geneDEInput()
+            tag <- attr(geneData, "name")
+            tag <- gsub("\\.gz$", "", tag)
+            tag <- gsub("\\.([ct]sv|txt|xlsx)$", "", tag)
+            tag
+        })
+        
+        output$inputDataParameters <- reactive({
+            has.genes <- FALSE
+            has.mets <- FALSE
+            
+            gene.de <- geneDEInput()
+            unmapped.genes <- notMappedGenes()
+            if (!is.null(unmapped.genes) && length(unmapped.genes) != 0) {
+                has.genes <- TRUE
+            }
+            
+            met.de <- metDEInput()
+            unmapped.mets <- notMappedMets()
+            if (!is.null(unmapped.mets) && length(unmapped.mets) != 0) {
+                has.mets <- TRUE
+            }
+            
+            res <- paste0(
+                makeJsAssignments(
+                    inputdata.hasGenes = has.genes,
+                    inputdata.hasMets = has.mets
+                )
+            )
+            res
+        })
+        
+        output$downloadGeneDENotMappedTable <- downloadHandler(
+            filename = reactive({ paste0(geneDETag(), ".unmapped.genes.csv")}),
+            content = function(file) {
+                write.csv(geneDENotMappedTableToDownload(), file, row.names = FALSE)
+            }
+        )
 
         metDEInputRaw <- reactive({
             if (loadExample()) {
@@ -380,13 +435,13 @@ app_server <- function(config_file) {
 
             res
         })
-
-        metDEInput <- reactive({
+        
+        getMetDb <- reactive({
             met.de.raw <- metDEInputRaw()
             if (is.null(met.de.raw)) {
                 return(NULL)
             }
-
+            
             if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
                 met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
                                             path = conf$path.to.met.lipid.db)
@@ -400,8 +455,31 @@ app_server <- function(config_file) {
                                            path = conf$path.to.met.rhea.db)
                 met.db <- met.rhea.db
             }
-
+            
+            met.db
+        })
+        
+        metDEMeta <- reactive({
+            met.de.raw <- metDEInputRaw()
+            if (is.null(met.de.raw)) {
+                return(NULL)
+            }
+            
+            met.db <- getMetDb()
+            
             met.de.meta <- getMetDEMeta(met.de.raw, met.db)
+            met.de.meta
+        })
+
+        metDEInput <- reactive({
+            met.de.raw <- metDEInputRaw()
+            if (is.null(met.de.raw)) {
+                return(NULL)
+            }
+            
+            met.db <- getMetDb()
+
+            met.de.meta <- metDEMeta()
 
             res <- prepareDE(met.de.raw, met.de.meta)
 
@@ -419,26 +497,12 @@ app_server <- function(config_file) {
 
 
         metIdsType <- reactive({
-            data <- metDEInput()
-            if (is.null(data)) {
+            met.de.meta <- metDEMeta()
+            if (is.null(met.de.meta)) {
                 return(NULL)
             }
 
-            if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
-                met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
-                                            path = conf$path.to.met.lipid.db)
-                met.db <- met.lipid.db
-            } else if (input$network == "kegg"){
-                met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
-                                           path = conf$path.to.met.kegg.db)
-                met.db <- met.kegg.db
-            } else {
-                met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
-                                           path = conf$path.to.met.rhea.db)
-                met.db <- met.rhea.db
-            }
-
-            res <- getMetDEMeta(data, met.db=met.db)$idType
+            res <- met.de.meta$idType
 
             if (length(res) != 1) {
                 stop("Can't determine type of IDs for metabolites")
@@ -479,30 +543,16 @@ app_server <- function(config_file) {
 
 
         notMappedMets <- reactive({
-            met.de <- metDEInput()
-
-            if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
-                met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
-                                            path = conf$path.to.met.lipid.db)
-                met.db <- met.lipid.db
-            } else if (input$network == "kegg"){
-                met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
-                                           path = conf$path.to.met.kegg.db)
-                met.db <- met.kegg.db
-            } else {
-                met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
-                                           path = conf$path.to.met.rhea.db)
-                met.db <- met.rhea.db
+            data <- metDEInput()
+            if (is.null(data)) {
+                return(NULL)
             }
-
+            
             metIT <- metIdsType()
-
             if (is.null(metIT)) {
                 return(NULL)
             }
-
-            meta.met.de <- getMetDEMeta(met.de, met.db=met.db)
-            data <- gatom:::prepareDE(met.de, meta.met.de)
+            
             data$initialID <- data$ID
 
             split <- " */// *"
@@ -516,7 +566,9 @@ app_server <- function(config_file) {
                     data <- data.new
                 }
             }
-
+            
+            met.db <- getMetDb()
+            
             if (metIT == met.db$baseId) {
                 notMappedIDs <- setdiff(data$ID, met.db$metabolites$metabolite)
             } else {
@@ -542,20 +594,7 @@ app_server <- function(config_file) {
                 return(NULL)
             }
             notMapped <- notMappedMets()
-
-            if ((input$loadExampleLipidDE) || (input$network == "lipidomic")) {
-                met.lipid.db <- lazyReadRDS(name = "met.lipid.db",
-                                            path = conf$path.to.met.lipid.db)
-                met.db <- met.lipid.db
-            } else if (input$network == "kegg"){
-                met.kegg.db <- lazyReadRDS(name = "met.kegg.db",
-                                           path = conf$path.to.met.kegg.db)
-                met.db <- met.kegg.db
-            } else {
-                met.rhea.db <- lazyReadRDS(name = "met.rhea.db",
-                                           path = conf$path.to.met.rhea.db)
-                met.db <- met.rhea.db
-            }
+            met.db <- getMetDb()
 
             div(
                 p(sprintf("Not mapped to %s: %s", met.db$baseId, length(notMapped))),
@@ -592,13 +631,45 @@ app_server <- function(config_file) {
         })
         outputOptions(output, "metDENotMappedTable", suspendWhenHidden = FALSE)
 
+        
+        metDENotMappedTableToDownload <- reactive({
+            data <- metDEInput()
+            if (is.null(data)) {
+                return(NULL)
+            }
+            notMapped <- notMappedMets()
+            if (length(notMapped) == 0) {
+                return(NULL)
+            }
+            
+            data <- data[order(pval)]
+            not.mapped.data <- data[ID %in% notMapped]
+            not.mapped.data
+        })
+        
+        metDETag <- reactive({
+            metData <- metDEInput()
+            tag <- attr(metData, "name")
+            tag <- gsub("\\.gz$", "", tag)
+            tag <- gsub("\\.([ct]sv|txt|xlsx)$", "", tag)
+            tag
+        })
+        
+        output$downloadMetDENotMappedTable <- downloadHandler(
+            filename = reactive({ paste0(metDETag(), ".unmapped.metabolites.csv")}),
+            content = function(file) {
+                write.csv(metDENotMappedTableToDownload(), file, row.names = FALSE)
+            }
+        )
+        
+        
         experimentTag <- reactive({
             geneData <- geneDEInput()
             metData <- metDEInput()
             name <- if (!is.null(geneData)) attr(geneData, "name") else attr(metData, "name")
             tag <- name
             tag <- gsub("\\.gz$", "", tag)
-            tag <- gsub("\\.([ct]sv|txt)$", "", tag)
+            tag <- gsub("\\.([ct]sv|txt|xlsx)$", "", tag)
             tag
         })
         
